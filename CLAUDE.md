@@ -18,23 +18,35 @@ On travaille sur le **squelette 2D** (17 points du corps), pas sur les pixels : 
 
 ## 3. Démarrer (tout est automatisé)
 
-Prérequis : Mac (testé sur Apple Silicon), `git`, `make` et [`uv`](https://docs.astral.sh/uv/) (`brew install uv`), et un accès en écriture au repo GitHub (à demander au propriétaire). Rien d'autre à télécharger à la main : `uv` installe Python 3.12 tout seul.
+**Prérequis (Mac, Windows ou Linux) :** `git`, **Python 3.12** ([python.org](https://www.python.org/downloads/), ou `brew install python@3.12` sur Mac) et un accès en écriture au repo GitHub (à demander au propriétaire). Rien d'autre à télécharger à la main. Les commandes ci-dessous n'utilisent que Python : elles marchent partout. Le `Makefile` n'est qu'un raccourci pour Mac/Linux (il demande `make` et `uv`).
 
 ```bash
-git clone https://github.com/Cdr-23/Fall_detection && cd Fall_detection
-make setup          # crée .venv (Python 3.12) et installe requirements.txt
+git clone https://github.com/Cdr-23/Fall_detection
+cd Fall_detection
 ```
+
+Crée et active l'environnement, puis installe (une seule fois) :
+
+| | Mac / Linux | Windows (PowerShell) |
+|---|---|---|
+| Créer | `python3.12 -m venv .venv` | `py -3.12 -m venv .venv` |
+| Activer | `source .venv/bin/activate` | `.venv\Scripts\Activate.ps1` |
+| Installer | `pip install -r requirements.txt` | `pip install -r requirements.txt` |
+
+Sous Windows, si l'activation est bloquée : `Set-ExecutionPolicy -Scope Process RemoteSigned`. Les modèles tournent sur CPU (c'est suffisant) ; une carte NVIDIA est utilisée automatiquement si PyTorch la voit. Vérifié sur Mac avec `pip` ; **pas testé sous Windows** : si une étape échoue, le dire à l'équipe plutôt que de contourner.
 
 **Les poses sont déjà dans le repo** (`poses/<séquence>.parquet`, un fichier par séquence URFD, avec les labels). P2, P3 et P4 peuvent donc coder leur algo tout de suite, sans télécharger les vidéos ni relancer YOLO.
 
-| Commande | Ce que ça fait | Qui |
+| Commande (l'environnement est activé) | Ce que ça fait | Qui |
 |---|---|---|
-| `make setup` | environnement Python | tout le monde |
-| `make data` | télécharge URFD (115 Mo) et vérifie les 70 vidéos | seulement pour la démo, les visuels ou pour refaire les poses |
-| `make pose` | extrait les poses avec YOLOv8n-pose (~7 min sur Mac) ; saute les séquences déjà faites | P1, si on change de modèle ou de réglage |
-| `make data-gmdcsa` | télécharge GMDCSA-24 (1,1 Go), test externe | P1 seulement |
+| `pip install -r requirements.txt` | installe les bibliothèques | tout le monde |
+| `python src/download.py` | télécharge URFD (115 Mo) et vérifie les 70 vidéos | seulement pour la démo, les visuels ou pour refaire les poses |
+| `python src/extract_pose.py` | extrait les poses avec YOLOv8n-pose (~7 min sur Mac) ; saute les séquences déjà faites | P1, si on change de modèle ou de réglage |
+| `python src/download.py --gmdcsa` | télécharge aussi GMDCSA-24 (1,1 Go), test externe | P1 seulement |
 
-Ne pas lancer `make pose` sans nécessité : le résultat est partagé, et deux versions des poses rendraient les comparaisons incohérentes.
+(Sur Mac/Linux, `make setup`, `make data`, `make pose` et `make data-gmdcsa` font la même chose.)
+
+Ne pas relancer l'extraction de poses sans nécessité : le résultat est partagé, et deux versions des poses rendraient les comparaisons incohérentes.
 
 **Format des poses** (`poses/<seq>.parquet`, une ligne par frame) : `seq, frame, label, person, kp0_x, kp0_y, kp0_c ... kp16_x, kp16_y, kp16_c, bx1, by1, bx2, by2, img_w, img_h`.
 - `frame` est numéroté à partir de 1, comme dans les CSV de labels d'URFD.
@@ -44,7 +56,7 @@ Ne pas lancer `make pose` sans nécessité : le résultat est partagé, et deux 
 
 **Les données brutes (pour info)**
 - URFD : 70 MP4 (640×240 : profondeur à gauche, **RGB à droite**) + 2 CSV de labels. Les frames des vidéos correspondent aux labels (vérifié : 11 936 frames, 0 écart). Licence CC BY-NC-SA 4.0 : Kwolek & Kepski, 2014, https://fenix.ur.edu.pl/mkepski/ds/uf.html
-- GMDCSA-24 (`make data-gmdcsa`, télécharge seulement le zip ; ensuite `cd data/raw/gmdcsa24 && unzip -q GMDCSA24-v2.1.zip`) : 160 clips MP4 (79 chutes, 81 ADL), 4 sujets, 3 domiciles, licence CC BY 4.0, DOI 10.5281/zenodo.13354453. Vérifié : le zip est intact. Structure : `<dossier>/Subject N/Fall/NN.mp4`, `Subject N/ADL/NN.mp4`, plus `Subject N/Fall.csv` et `ADL.csv`. Les vidéos sont en **1280×720, ~30 fps, image RGB complète** (pas de profondeur : ne pas recadrer comme pour URFD). Les CSV ont les colonnes `File Name, Length (seconds), Time of Recording, Attire, Description, Classes` ; `Classes` donne des intervalles en secondes, par ex. `Falling (SW)[3.4 to 6]; Sitting[0 to 3.4]` ou `Sitting[0 to 1]; Sleeping[2 to 8]`. Attention : « Falling » court jusqu'à la fin du clip (chute + sol), donc c'est plus grossier que les labels d'URFD. `src/extract_pose.py` ne gère pas ce format (il lit les MP4 d'URFD et garde la moitié droite) : il faut le généraliser avant de s'en servir.
+- GMDCSA-24 (`python src/download.py --gmdcsa`, télécharge seulement le zip ; ensuite `cd data/raw/gmdcsa24 && unzip -q GMDCSA24-v2.1.zip`) : 160 clips MP4 (79 chutes, 81 ADL), 4 sujets, 3 domiciles, licence CC BY 4.0, DOI 10.5281/zenodo.13354453. Vérifié : le zip est intact. Structure : `<dossier>/Subject N/Fall/NN.mp4`, `Subject N/ADL/NN.mp4`, plus `Subject N/Fall.csv` et `ADL.csv`. Les vidéos sont en **1280×720, ~30 fps, image RGB complète** (pas de profondeur : ne pas recadrer comme pour URFD). Les CSV ont les colonnes `File Name, Length (seconds), Time of Recording, Attire, Description, Classes` ; `Classes` donne des intervalles en secondes, par ex. `Falling (SW)[3.4 to 6]; Sitting[0 to 3.4]` ou `Sitting[0 to 1]; Sleeping[2 to 8]`. Attention : « Falling » court jusqu'à la fin du clip (chute + sol), donc c'est plus grossier que les labels d'URFD. `src/extract_pose.py` ne gère pas ce format (il lit les MP4 d'URFD et garde la moitié droite) : il faut le généraliser avant de s'en servir.
 - CAUCAFall (optionnel, 8,3 Go, pas sans accord de l'équipe) : `curl -fL -o data/raw/caucafall.zip "https://data.mendeley.com/public-api/zip/7w7fccy7ky/download/5"`. 100 vidéos, 10 sujets, CC BY 4.0.
 - `data/` est ignoré par git ; les poses (`poses/`) sont, elles, suivies.
 
@@ -71,9 +83,9 @@ L'alerte se déclenche sur `chute`. `allongé` sert au temps passé au sol.
 | Test final | **Vidéos filmées par l'équipe** | chutes et activités dans un environnement clair | `data/own/` (voir format ci-dessous) |
 | En attente | CAUCAFall | 8,3 Go, trop lourd pour le disque | décision à prendre |
 
-- `data/` est exclu de git (`.gitignore`). Les données brutes se téléchargent avec `make data` (voir section 3). Les poses extraites (`poses/`, 6 Mo) sont suivies par git.
+- `data/` est exclu de git (`.gitignore`). Les données brutes se téléchargent avec `python src/download.py` (voir section 3). Les poses extraites (`poses/`, 6 Mo) sont suivies par git.
 - IKAR (AGH Cracovie, 278 vidéos de chutes, sans activités du quotidien) est écarté : on n'en a pas besoin, les vidéos de l'équipe le remplacent.
-- **Personne n'a besoin de télécharger quoi que ce soit pour coder P2, P3, P4** : les poses sont dans le repo. `make data` (URFD, 115 Mo) ne sert qu'à la démo et aux visuels ; GMDCSA-24 (1,1 Go) ne sert qu'au test externe.
+- **Personne n'a besoin de télécharger quoi que ce soit pour coder P2, P3, P4** : les poses sont dans le repo. `python src/download.py` (URFD, 115 Mo) ne sert qu'à la démo et aux visuels ; GMDCSA-24 (1,1 Go) ne sert qu'au test externe.
 - Les labels n'ont pas le même format selon le dataset : une règle unique « fenêtre = chute ? » est à écrire et à documenter.
 - Les datasets sont sous licence CC BY (-NC-SA pour URFD) : à citer dans le README.
 
@@ -171,7 +183,7 @@ Déjà fait : téléchargement (`make data`), extraction des poses (`make pose`)
 4. **`src/metrics.py`** et **`src/evaluate.py`** : implémentent exactement les métriques de 7.0. `python src/evaluate.py results/<algo>_oof.parquet --tau 0.5` écrit `results/<algo>_metrics.csv` (une ligne par métrique). Teste-les sur le modèle naïf et sur des prédictions parfaites (tout doit sortir à 1). Commit : `Add shared evaluation metrics`.
 5. **Modèle naïf** `src/run_naive.py` : prédit toujours `pas chute`. Écrit `results/naive_oof.parquet` et `models/naive.joblib`. Commit : `Add naive baseline`.
 6. **Vérifications avant de dire « fini »** : nombre de fenêtres par classe et par fold (afficher le tableau) ; aucune séquence dans deux folds ; chaque fold contient des chutes ; l'ordre des lignes est cohérent entre les 4 fichiers ; la règle de label est écrite dans la docstring de `preprocess.py`.
-7. **Ensuite** (si le temps le permet) : généraliser l'extraction de poses à n'importe quelle vidéo (option « image complète » au lieu de la moitié droite, 1280×720 pour GMDCSA-24 et pour les vidéos de l'équipe), puis `src/demo.py` (vidéo → poses → fenêtres → features → `predict_proba` de chaque algo → tableau de classes au fil du temps). Pour GMDCSA-24 : `make data-gmdcsa`, décompresser, extraire les poses, convertir les intervalles de `Classes` en classes par frame.
+7. **Ensuite** (si le temps le permet) : généraliser l'extraction de poses à n'importe quelle vidéo (option « image complète » au lieu de la moitié droite, 1280×720 pour GMDCSA-24 et pour les vidéos de l'équipe), puis `src/demo.py` (vidéo → poses → fenêtres → features → `predict_proba` de chaque algo → tableau de classes au fil du temps). Pour GMDCSA-24 : `python src/download.py --gmdcsa`, décompresser, extraire les poses, convertir les intervalles de `Classes` en classes par frame.
 
 ### 7.2 P2 — Règles puis régression (branche `p2-rules-logreg`)
 

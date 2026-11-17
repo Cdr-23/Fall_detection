@@ -28,6 +28,8 @@ def device():
     d = CFG["pose"]["device"]
     if d != "auto":
         return d
+    if torch.cuda.is_available():
+        return "cuda"                                   # Windows / Linux with an NVIDIA GPU
     return "mps" if torch.backends.mps.is_available() else "cpu"
 
 
