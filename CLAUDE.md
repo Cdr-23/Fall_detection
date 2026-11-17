@@ -16,59 +16,37 @@
 On travaille sur le **squelette 2D** (17 points du corps), pas sur les pixels : plus léger, tourne en local sur une caméra, meilleur pour la vie privée (on peut jeter l'image).
 **YOLOv8n-pose** est un modèle déjà entraîné (sur COCO) : on l'utilise tel quel pour extraire les squelettes, on ne l'entraîne pas. Les modèles de la section 7 sont entraînés sur ces squelettes.
 
-## 3. Démarrer, pas à pas (à faire seul, depuis zéro)
+## 3. Démarrer (tout est automatisé)
 
-Les commandes sont testées sur Mac Apple Silicon. Compter ~15 min hors téléchargement.
+Prérequis : Mac, `git`, `make` et [`uv`](https://docs.astral.sh/uv/) (`brew install uv`). Rien d'autre à télécharger à la main.
 
-**a. Cloner et exclure les données de git**
 ```bash
 git clone https://github.com/Cdr-23/Fall_detection && cd Fall_detection
-echo "data/" >> .git/info/exclude
-mkdir -p data/raw data/pose results
+make setup          # crée .venv (Python 3.12) et installe requirements.txt
 ```
 
-**b. Environnement Python 3.12** (`requirements.txt` sera créé par P1 ; en attendant) :
-```bash
-uv venv --python 3.12 .venv && source .venv/bin/activate
-uv pip install ultralytics torch pandas pyarrow numpy scikit-learn shap matplotlib pyyaml requests tqdm opencv-python-headless
-```
-Pas de LightGBM (il demande `brew install libomp`) : on utilise le gradient boosting de scikit-learn.
+**Les poses sont déjà dans le repo** (`poses/<séquence>.parquet`, un fichier par séquence URFD, avec les labels). P2, P3 et P4 peuvent donc coder leur algo tout de suite, sans télécharger les vidéos ni relancer YOLO.
 
-**c. Télécharger les datasets** (tout se fait avec `curl`, depuis la racine du repo). Vérifie d'abord l'espace disque (`df -h ~`).
+| Commande | Ce que ça fait | Qui |
+|---|---|---|
+| `make setup` | environnement Python | tout le monde |
+| `make data` | télécharge URFD (115 Mo) et vérifie les 70 vidéos | seulement pour la démo, les visuels ou pour refaire les poses |
+| `make pose` | extrait les poses avec YOLOv8n-pose (~7 min sur Mac) ; saute les séquences déjà faites | P1, si on change de modèle ou de réglage |
+| `make data-gmdcsa` | télécharge GMDCSA-24 (1,1 Go), test externe | P1 seulement |
 
-*URFD, entraînement (115 Mo) :*
-```bash
-cd data/raw && B=https://fenix.ur.edu.pl/mkepski/ds/data
-curl -sfLO $B/urfall-cam0-falls.csv -O $B/urfall-cam0-adls.csv
-( for i in $(seq -w 1 30); do echo "fall-$i-cam0.mp4"; done; for i in $(seq -w 1 40); do echo "adl-$i-cam0.mp4"; done ) | xargs -P 6 -I{} curl -sfL -o {} $B/{}
-ls *.mp4 | wc -l   # doit afficher 70
-cd ../..
-```
-- Chaque MP4 (640×240, 30 fps) contient la **profondeur à gauche** et le **RGB à droite** (320×240) : recadrer la moitié droite avant YOLO (`frame[:, frame.shape[1]//2:]`).
-- Les CSV : colonnes `séquence, frame, label` (-1 pas allongé, 0 en train de tomber, 1 allongé), puis 7 colonnes issues de la profondeur qu'on n'utilise pas. Les frames des MP4 correspondent aux labels (vérifié : 11 936 frames, 0 écart).
-- Licence CC BY-NC-SA 4.0, à citer : Kwolek & Kepski, 2014, https://fenix.ur.edu.pl/mkepski/ds/uf.html
+Ne pas lancer `make pose` sans nécessité : le résultat est partagé, et deux versions des poses rendraient les comparaisons incohérentes.
 
-*GMDCSA-24, test externe (1,1 Go) :*
-```bash
-mkdir -p data/raw/gmdcsa24 && cd data/raw/gmdcsa24
-curl -fL -o GMDCSA24-v2.1.zip "https://zenodo.org/api/records/13354453/files/ekramalam/GMDCSA24-A-Dataset-for-Human-Fall-Detection-in-Videos-v2.1.zip/content"
-unzip -q GMDCSA24-v2.1.zip && cd ../../..
-```
-- ~160 clips vidéo, 4 acteurs, 3 domiciles. Licence CC BY 4.0, DOI 10.5281/zenodo.13354453.
-- Après extraction, lire le contenu des CSV et la structure des dossiers : ils n'ont pas encore été inspectés.
+**Format des poses** (`poses/<seq>.parquet`, une ligne par frame) : `seq, frame, label, person, kp0_x, kp0_y, kp0_c ... kp16_x, kp16_y, kp16_c, bx1, by1, bx2, by2, img_w, img_h`.
+- `frame` est numéroté à partir de 1, comme dans les CSV de labels d'URFD.
+- `label` : -1 pas allongé, 0 en train de tomber, 1 allongé. NaN quand la frame n'est pas dans le CSV d'origine (certaines frames des ADL n'ont pas de label : à ignorer ou à documenter).
+- `person` vaut 0 quand YOLO ne trouve personne ; les keypoints sont alors vides. C'est fréquent quand la personne est allongée (~30 % des frames).
+- Points COCO (0 nez, 5-6 épaules, 11-12 hanches, 13-14 genoux, 15-16 chevilles), en pixels de l'image RGB 320×240, avec leur confiance `_c`.
 
-*IKAR, test externe (121 Mo), à faire à la main :*
-- Page : https://agh.rodbuk.pl/dataset.xhtml?persistentId=doi%3A10.58032%2FAGH%2FA1NZPE
-- Le téléchargement demande un formulaire (« guestbook ») avec des informations personnelles. **Un Claude ne doit pas le remplir : demande à ton utilisateur de télécharger `IKAR_dataset.tar.gz` et de le déposer dans `data/raw/ikar/`**, puis `tar xzf IKAR_dataset.tar.gz` et vérifier le MD5 `2667661c258610c0c0aa4bc58a7fc7c2`.
-- 278 vidéos de chutes seulement (pas d'activités du quotidien), 7 sujets, boîtes englobantes. Licence CC BY 4.0 (AGH Cracovie, 2026).
-
-*CAUCAFall, optionnel (8,3 Go, ne pas télécharger sans accord de l'équipe) :*
-```bash
-curl -fL -o data/raw/caucafall.zip "https://data.mendeley.com/public-api/zip/7w7fccy7ky/download/5"
-```
-- 100 vidéos, 10 sujets, frames PNG avec labels fall / no-fall. Licence CC BY 4.0.
-
-**d. Extraire les poses** (une seule fois, résultats en cache dans `data/pose/`) avec YOLOv8n-pose sur le RGB de chaque vidéo. Le modèle `yolov8n-pose.pt` se télécharge tout seul au premier lancement. Sur MPS (Mac), compter 15 à 30 min pour URFD.
+**Les données brutes (pour info)**
+- URFD : 70 MP4 (640×240 : profondeur à gauche, **RGB à droite**) + 2 CSV de labels. Les frames des vidéos correspondent aux labels (vérifié : 11 936 frames, 0 écart). Licence CC BY-NC-SA 4.0 : Kwolek & Kepski, 2014, https://fenix.ur.edu.pl/mkepski/ds/uf.html
+- GMDCSA-24 : ~160 clips, 4 acteurs, 3 domiciles, licence CC BY 4.0, DOI 10.5281/zenodo.13354453. Structure des dossiers et des CSV pas encore inspectée.
+- CAUCAFall (optionnel, 8,3 Go, pas sans accord de l'équipe) : `curl -fL -o data/raw/caucafall.zip "https://data.mendeley.com/public-api/zip/7w7fccy7ky/download/5"`. 100 vidéos, 10 sujets, CC BY 4.0.
+- `data/` est ignoré par git ; les poses (`poses/`) sont, elles, suivies.
 
 ## 4. Ce qu'on veut en sortie
 
@@ -90,12 +68,13 @@ L'alerte se déclenche sur `chute`. `allongé` sert au temps passé au sol.
 |---|---|---|---|
 | Entraînement + validation croisée | **URFD** (caméra 0) | 70 séquences (30 chutes, 40 ADL), labels par frame | `data/raw/` (MP4, 115 Mo) |
 | Test externe | **GMDCSA-24** | ~160 clips, 4 acteurs, 3 domiciles | `data/raw/gmdcsa24/` (1,1 Go) |
-| Test externe (chutes seulement) | **IKAR** (AGH Cracovie) | 278 vidéos de chutes, 7 sujets, boîtes englobantes | à télécharger à la main (formulaire) |
+| Test final | **Vidéos filmées par l'équipe** | chutes et activités dans un environnement clair | fournies par l'équipe, à déposer dans `data/own/` |
 | En attente | CAUCAFall | 8,3 Go, trop lourd pour le disque | décision à prendre |
 
 - `data/` est exclu de git (`.git/info/exclude`). Chacun télécharge de son côté avec `src/download.py`.
 - Les poses extraites (quelques Mo) sont partageables.
-- IKAR n'a pas d'activités du quotidien : il mesure le rappel, pas les fausses alertes.
+- IKAR (AGH Cracovie, 278 vidéos de chutes, sans activités du quotidien) est écarté : on n'en a pas besoin, les vidéos de l'équipe le remplacent.
+- URFD : tout le monde le télécharge. GMDCSA-24 : seulement P1, qui partage les poses extraites (quelques Mo).
 - Les labels n'ont pas le même format selon le dataset : une règle unique « fenêtre = chute ? » est à écrire et à documenter.
 - Les datasets sont sous licence CC BY (-NC-SA pour URFD) : à citer dans le README.
 
@@ -133,7 +112,7 @@ Dépendance : P2, P3 et P4 attendent que P1 ait livré les poses et les features
 **Méthode :**
 - **Découpage par séquence, jamais par frame ni par fenêtre** (`StratifiedGroupKFold`, 5 folds, groupe = séquence). Sinon fuite de données.
 - **Ne jamais toucher au fold de test** pour régler un hyperparamètre. Les seuils se choisissent sur la validation.
-- Les datasets de test externe (GMDCSA-24, IKAR) ne servent qu'à tester, jamais à régler quoi que ce soit.
+- Les datasets de test externe (GMDCSA-24 et les vidéos de l'équipe) ne servent qu'à tester, jamais à régler quoi que ce soit.
 - Seed fixe partout (dans `config/params.yaml`).
 - Si un score paraît trop beau (AUC proche de 1), chercher une fuite avant de le croire.
 - 70 séquences, c'est petit : le dire honnêtement.
