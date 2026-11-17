@@ -191,10 +191,11 @@ def load_poses(seq, poses_dir=POSES):
     return pd.read_parquet(Path(poses_dir) / f"{seq}.parquet")
 
 
-def build(seqs=None, poses_dir=POSES, out=PROCESSED, cfg=CFG):
-    """Write the processed/ files. Folds are always computed on every sequence of poses_dir."""
+def build(seqs=None, poses_dir=POSES, out=PROCESSED, cfg=CFG, cv=True):
+    """Write the processed/ files. Folds are always computed on every sequence of poses_dir.
+    cv=False (external test sets): no split, fold = -1 everywhere."""
     all_seqs = sorted(p.stem for p in Path(poses_dir).glob("*.parquet"))
-    folds = make_folds(all_seqs, cfg)
+    folds = make_folds(all_seqs, cfg) if cv else pd.DataFrame({"seq": all_seqs, "fold": -1})
     fold_of = dict(zip(folds.seq, folds.fold))
     seqs = all_seqs if not seqs else sorted(seqs)
     metas, Xs, Vs, seq_rows = [], [], [], []

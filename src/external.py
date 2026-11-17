@@ -1,0 +1,121 @@
+"""External test sets (GMDCSA-24, the team's own videos): poses + labels + processed windows.
+
+These sets are ONLY for testing: never tune anything on them.
+
+Label rule (interval labels such as "Falling (SW)[3.4 to 6]; Sitting[0 to 3.4]", in seconds):
+  - Falling / Fall [a to b]  -> class 1 (fall) for the first second [a, a + 1 s), like the
+    30-frame fall phase of URFD, then class 2 (lying) until b. In GMDCSA-24 "Falling" runs to the
+    end of the clip (fall + time on the floor), so this split is an approximation; the event
+    metrics (fall start s0 = a) do not depend on it.
+  - Sleeping / Lying         -> class 2 (lying).
+  - any other activity       -> class 0 (not fall) (sitting, walking, standing, reading, ...).
+  - frames in no interval    -> NaN (ignored). Fall intervals win over overlapping ones.
+Frame i (1-based) is at time (i - 1) / 30 s, after resampling the poses to 30 fps.
+
+Outputs: poses/<name>/<seq>.parquet (pose columns + y + activity) and processed/<name>/
+(windows_meta with fold = -1, features, X_seq, valid, sequences.csv), same format as URFD.
+
+Usage: python src/external.py gmdcsa24     # needs data/raw/gmdcsa24 unzipped (CLAUDE.md, 3)
+       python src/external.py own          # data/own/*.mp4 + data/own/labels.csv (file, classes)
+"""
+import re
+import sys
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+
+import extract_pose
+import features
+import preprocess
+from preprocess import CFG, ROOT
+
+RAW = ROOT / "data" / "raw"
+PATTERN = re.compile(r"([A-Za-z][A-Za-z ()/_-]*?)\s*\[\s*([\d.]+)\s*to\s*([\d.]+)\s*\]")
+
+
+def parse_classes(text):
+    """'Falling (SW)[3.4 to 6]; Sitting[0 to 3.4]' -> [('Falling (SW)', 3.4, 6.0), ...]"""
+    return [(n.strip(), float(a), float(b)) for n, a, b in PATTERN.findall(str(text))]
+
+
+def class_of(name):
+    n = name.lower()
+    if n.startswith("fall"):
+        return 1
+    if n.startswith(("sleep", "lying", "lie")):
+        return 2
+    return 0
+
+
+def frame_labels(intervals, n_frames, fps=CFG["data"]["fps"]):
+    """Per-frame class (float, NaN = unlabelled) and activity name, from interval labels."""
+    t = np.arange(n_frames) / fps
+    y = np.full(n_frames, np.nan)
+    act = np.full(n_frames, "", dtype=object)
+    for name, a, b in sorted(intervals, key=lambda x: class_of(x[0]) == 1):   # falls last
+        inside = (t >= a - 1e-9) & (t <= b + 1e-9)
+        c = class_of(name)
+        if c == 1:
+            y[inside] = np.where(t[inside] < a + 1.0, 1, 2)
+        else:
+            y[inside] = c
+        act[inside] = name
+    return y, act
+
+
+def gmdcsa_clips(root=RAW / "gmdcsa24"):
+    """(seq, video path, classes text) for every clip listed in the Fall.csv / ADL.csv files."""
+    clips = []
+    for csv in sorted(Path(root).glob("*/Subject */*.csv")):
+        subject = csv.parent.name.split()[-1]
+        kind = csv.stem.lower()                                   # fall or adl
+        for line in csv.read_text(encoding="utf-8-sig").splitlines()[1:]:
+            if not line.strip():
+                continue
+            fname = line.split(",")[0].strip()
+            video = csv.parent / csv.stem / fname
+            seq = f"gmdcsa-s{subject}-{kind}-{Path(fname).stem}"
+            clips.append((seq, video, line))
+    return clips
+
+
+def own_clips(root=ROOT / "data" / "own"):
+    root = Path(root)
+    labels = pd.read_csv(root / "labels.csv", skipinitialspace=True)
+    return [(f"own-{Path(f).stem}", root / f, c) for f, c in zip(labels["file"], labels["classes"])]
+
+
+def extract(clips, poses_dir):
+    poses_dir = Path(poses_dir)
+    poses_dir.mkdir(parents=True, exist_ok=True)
+    model, dev = None, extract_pose.device()
+    for seq, video, classes in clips:
+        out = poses_dir / f"{seq}.parquet"
+        if out.exists():
+            continue
+        if not Path(video).exists():
+            print(f"{seq}: missing video {video}")
+            continue
+        model = model or extract_pose.load_model()
+        df = extract_pose.extract_video(video, model, dev, seq=seq)
+        df["y"], df["activity"] = frame_labels(parse_classes(classes), len(df))
+        df.to_parquet(out)
+        print(f"{seq}: {len(df)} frames @30fps (src {df.src_fps.iloc[0]:.0f} fps), "
+              f"person {df.person.mean():.0%}, classes {np.unique(df.y[~np.isnan(df.y)])}",
+              flush=True)
+
+
+def build(name):
+    clips = gmdcsa_clips() if name == "gmdcsa24" else own_clips()
+    poses_dir, out = ROOT / "poses" / name, ROOT / "processed" / name
+    extract(clips, poses_dir)
+    meta = preprocess.build(poses_dir=poses_dir, out=out, cv=False)
+    (out / "folds.csv").unlink(missing_ok=True)                 # no split on a test set
+    features.build(processed=out, poses_dir=poses_dir)
+    print(f"{len(meta)} windows from {meta.seq.nunique()} sequences")
+    print(pd.crosstab(meta["kind"], meta["y"].map(preprocess.CLASSES), margins=True))
+
+
+if __name__ == "__main__":
+    build(sys.argv[1] if len(sys.argv) > 1 else "gmdcsa24")
