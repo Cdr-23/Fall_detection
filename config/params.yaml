@@ -1,0 +1,13 @@
+seed: 42
+data:
+  base_url: https://fenix.ur.edu.pl/mkepski/ds/data
+  n_falls: 30
+  n_adls: 40
+  fps: 30
+pose:
+  model: yolov8n-pose.pt   # pretrained on COCO, used as is (downloaded on first run)
+  device: auto             # mps if available, else cpu
+  conf: 0.25
+window:
+  length: 30               # frames (~1 s)
+  stride: 5
