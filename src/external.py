@@ -10,6 +10,9 @@ Label rule (interval labels such as "Falling (SW)[3.4 to 6]; Sitting[0 to 3.4]",
   - Sleeping / Lying         -> class 2 (lying).
   - any other activity       -> class 0 (not fall) (sitting, walking, standing, reading, ...).
   - frames in no interval    -> NaN (ignored). Fall intervals win over overlapping ones.
+GMDCSA-24 label typos: s4-fall-09 'Falling (BW)[2.3 6]' is read as [2.3 to 6];
+s4-fall-15 'Falling (FW)' has no interval, so this clip has no fall event (not guessed);
+s2-adl-06 'Sitting[9.7 to 3]' is reversed and dropped.
 Frame i (1-based) is at time (i - 1) / 30 s, after resampling the poses to 30 fps.
 
 Outputs: poses/<name>/<seq>.parquet (pose columns + y + activity) and processed/<name>/
@@ -31,12 +34,24 @@ import preprocess
 from preprocess import CFG, ROOT
 
 RAW = ROOT / "data" / "raw"
-PATTERN = re.compile(r"([A-Za-z][A-Za-z ()/_-]*?)\s*\[\s*([\d.]+)\s*to\s*([\d.]+)\s*\]")
+PATTERN = re.compile(r"([A-Za-z][A-Za-z ()/_-]*?)\s*\[([^\]]*)\]")
+SPAN = re.compile(r"([\d.]+)\s*(?:to)?\s*([\d.]+)")
 
 
-def parse_classes(text):
-    """'Falling (SW)[3.4 to 6]; Sitting[0 to 3.4]' -> [('Falling (SW)', 3.4, 6.0), ...]"""
-    return [(n.strip(), float(a), float(b)) for n, a, b in PATTERN.findall(str(text))]
+def parse_classes(text, warn=None):
+    """'Falling (SW)[3.4 to 6]; Sitting[0 to 3.4]' -> [('Falling (SW)', 3.4, 6.0), ...].
+    Tolerates the typos found in GMDCSA-24: several spans in one bracket ('[0 to 0.5; 4 to 6]'),
+    a missing 'to' ('[2.3 6]'). Reversed spans ('[9.7 to 3]') are dropped (reported to `warn`)."""
+    out = []
+    for name, inside in PATTERN.findall(str(text)):
+        for a, b in SPAN.findall(inside):
+            a, b = float(a), float(b)
+            if a > b:
+                if warn:
+                    warn(f"dropped reversed span {name.strip()}[{a} to {b}]")
+                continue
+            out.append((name.strip(), a, b))
+    return out
 
 
 def class_of(name):
@@ -92,14 +107,22 @@ def extract(clips, poses_dir):
     model, dev = None, extract_pose.device()
     for seq, video, classes in clips:
         out = poses_dir / f"{seq}.parquet"
-        if out.exists():
+        if out.exists():                                          # cached poses: refresh labels only
+            df = pd.read_parquet(out)
+            y, act = frame_labels(parse_classes(classes), len(df))
+            if not (np.array_equal(df["y"].to_numpy(), y, equal_nan=True)
+                    and (df["activity"].to_numpy() == act).all()):
+                df["y"], df["activity"] = y, act
+                df.to_parquet(out)
+                print(f"{seq}: labels updated")
             continue
         if not Path(video).exists():
             print(f"{seq}: missing video {video}")
             continue
         model = model or extract_pose.load_model()
         df = extract_pose.extract_video(video, model, dev, seq=seq)
-        df["y"], df["activity"] = frame_labels(parse_classes(classes), len(df))
+        df["y"], df["activity"] = frame_labels(parse_classes(classes, lambda m: print(seq, m)),
+                                               len(df))
         df.to_parquet(out)
         print(f"{seq}: {len(df)} frames @30fps (src {df.src_fps.iloc[0]:.0f} fps), "
               f"person {df.person.mean():.0%}, classes {np.unique(df.y[~np.isnan(df.y)])}",
