@@ -5,7 +5,8 @@ max_depth in 2..6 and min_samples_leaf in {5, 10, 20} are chosen by an inner spl
 inside the training folds (see tree_tuning.py), never on the test fold.
 
 Outputs: results/cart_oof.parquet, results/cart_params.csv (chosen per fold + final),
-models/cart.joblib, results/cart_tree.png and results/cart_rules.txt (readable final tree).
+models/cart.joblib, results/cart_tree.png and results/cart_rules.txt (readable final tree),
+results/cart_tree_top.png (its first 3 levels, for slides).
 Usage: python src/run_cart.py
 """
 import joblib
@@ -50,6 +51,12 @@ def export_tree(model):
     plot_tree(tree, feature_names=FEATURES, class_names=CLASS_NAMES, filled=True, rounded=True,
               impurity=False, proportion=True, precision=2, fontsize=8, ax=ax)
     fig.savefig(RESULTS / "cart_tree.png", dpi=120, bbox_inches="tight")
+    plt.close(fig)
+    # Same final tree, first 3 levels only: readable on a slide (deeper nodes are elided).
+    fig, ax = plt.subplots(figsize=(30, 9))
+    plot_tree(tree, max_depth=3, feature_names=FEATURES, class_names=CLASS_NAMES, filled=True,
+              rounded=True, impurity=False, proportion=True, precision=2, fontsize=11, ax=ax)
+    fig.savefig(RESULTS / "cart_tree_top.png", dpi=120, bbox_inches="tight")
     plt.close(fig)
 
 
