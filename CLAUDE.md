@@ -209,7 +209,9 @@ Déjà fait : téléchargement (`make data`), extraction des poses (`make pose`)
 - Fausses alertes par heure : la durée d'ADL surveillée = nombre de fenêtres ADL × 5 / 30 s = **0,07 h** (les 30 premières frames de chaque séquence et les frames sans label ne sont jamais évaluées). Toujours donner le nombre brut.
 - Modèle naïf : ROC-AUC 0,50, PR-AUC 0,075 (= part des fenêtres `chute`), rappel d'événements 0. C'est le plancher.
 - Les poses ont été extraites sur Mac (MPS) ; refaire fall-01 sous Windows (CPU) donne 99 % de frames identiques en détection, à quelques pixels près. On garde les poses du repo.
-- GMDCSA-24 : règle de label dans la docstring de `src/external.py` (« Falling » = `chute` pendant 1 s puis `allongé`, car l'intervalle court jusqu'à la fin du clip ; « Sleeping » = `allongé`). Certains clips sont à 15 fps : les poses sont rééchantillonnées à 30 fps par interpolation.
+- GMDCSA-24 : règle de label dans la docstring de `src/external.py` (« Falling » = `chute` pendant 1 s puis `allongé`, car l'intervalle court jusqu'à la fin du clip ; « Sleeping » = `allongé`). 29 clips sur 160 sont à 15 fps : les poses sont rééchantillonnées à 30 fps par interpolation.
+- GMDCSA-24 est prêt (poses et fenêtres suivies par git, pas besoin de télécharger) : `poses/gmdcsa24/` (160 clips, personne détectée sur 95 % des frames) et `processed/gmdcsa24/` (**6 046 fenêtres** : 3 948 `pas chute`, 434 `chute`, 1 664 `allongé` ; 78 chutes avec un début connu). Le CSV source a des fautes : `s4-fall-15` n'a pas d'intervalle « Falling » (pas d'événement de chute, on ne le devine pas), un intervalle inversé est écarté (`s2-adl-06`), les autres sont corrigées par le parseur.
+- Pour P5, appliquer un modèle final à GMDCSA-24 : `meta, feats, X, _ = load_data("processed/gmdcsa24")`, `proba = predict_proba(feats, X)`, `oof_frame(meta, proba)` → parquet, puis `python src/evaluate.py <fichier> --meta processed/gmdcsa24/windows_meta.parquet --sequences processed/gmdcsa24/sequences.csv`. Vidéos de l'équipe : `python src/external.py own` (avec `data/own/labels.csv`), même chose avec `processed/own`.
 
 ### 7.2 P2 — Règles puis régression (branche `p2-rules-logreg`)
 
