@@ -185,6 +185,32 @@ Déjà fait : téléchargement (`make data`), extraction des poses (`make pose`)
 6. **Vérifications avant de dire « fini »** : nombre de fenêtres par classe et par fold (afficher le tableau) ; aucune séquence dans deux folds ; chaque fold contient des chutes ; l'ordre des lignes est cohérent entre les 4 fichiers ; la règle de label est écrite dans la docstring de `preprocess.py`.
 7. **Ensuite** (si le temps le permet) : généraliser l'extraction de poses à n'importe quelle vidéo (option « image complète » au lieu de la moitié droite, 1280×720 pour GMDCSA-24 et pour les vidéos de l'équipe), puis `src/demo.py` (vidéo → poses → fenêtres → features → `predict_proba` de chaque algo → tableau de classes au fil du temps). Pour GMDCSA-24 : `python src/download.py --gmdcsa`, décompresser, extraire les poses, convertir les intervalles de `Classes` en classes par frame.
 
+#### 7.1 bis — Livré par P1 (mardi 17 nov., branche `p1-foundations`)
+
+**Ce qui est prêt** (tout tourne sous Windows et Mac, avec `python src/...` depuis la racine) :
+
+| Fichier | Rôle |
+|---|---|
+| `processed/` | contrat 7.0 complet, 70 séquences, **2 019 fenêtres** : 1 373 `pas chute`, **151 `chute`**, 495 `allongé`. En plus : `sequences.csv` (`seq, kind, fold, n_frames, fall_start, fall_end`), utilisé par les métriques d'événements |
+| `src/common.py` | `load_data()` → `meta, feats, X_seq, valid` ; `oof_frame(meta, proba)` → table OOF au bon format ; `save_oof(algo, oof)` ; `FEATURES` (les 26 colonnes) |
+| `src/run_naive.py` | modèle de référence, à copier comme squelette (boucle sur les folds, `predict_proba`, sauvegarde) |
+| `src/evaluate.py` | `python src/evaluate.py results/<algo>_oof.parquet` : vérifie le format, écrit `results/<algo>_metrics.csv` (valeur globale, moyenne ± écart-type sur les folds, chaque fold), mesure la latence de `predict_proba` et la taille du modèle |
+| `tests/test_metrics.py` | `python tests/test_metrics.py` : prédictions parfaites → tout à 1, naïf → rappel 0, cas synthétiques, cohérence de `processed/` |
+| `src/external.py` | GMDCSA-24 (et `data/own/`) → `poses/gmdcsa24/` et `processed/gmdcsa24/` au même format (`fold = -1`) |
+| `src/demo.py` | `python src/demo.py video.mp4` ou `--poses poses/gmdcsa24/<seq>.parquet` : classe et `p1` de chaque algo au fil du temps (CSV + frise PNG dans `results/demo/`) |
+
+**Conventions à connaître :**
+- `predict_proba(feats, X_seq)` reçoit les lignes de `features.parquet` **avec** `window_id` : sélectionner `feats[FEATURES]`. La démo et `evaluate.py` l'appellent ainsi. Charger le modèle une seule fois (variable globale), comme dans `run_naive.py`.
+- 44 fenêtres n'ont aucune feature (personne non détectée sur toute la fenêtre) : imputer avec la médiane du train.
+- `.gitignore` laisse passer `models/*.pt` (pour `models/nn.pt`) ; `results/demo/` est ignoré (régénérable).
+
+**Constats à reprendre dans les slides :**
+- **16 chutes sur 30 commencent avant la frame 30** (la première seconde de la vidéo). La première fenêtre ne se termine qu'à la frame 30 : ces chutes ont moins de 6 fenêtres `chute` (151 au lieu de 180), peu de contexte « avant », et un délai minimal non nul. Même un modèle parfait a un délai moyen de **0,22 s**.
+- Fausses alertes par heure : la durée d'ADL surveillée = nombre de fenêtres ADL × 5 / 30 s = **0,07 h** (les 30 premières frames de chaque séquence et les frames sans label ne sont jamais évaluées). Toujours donner le nombre brut.
+- Modèle naïf : ROC-AUC 0,50, PR-AUC 0,075 (= part des fenêtres `chute`), rappel d'événements 0. C'est le plancher.
+- Les poses ont été extraites sur Mac (MPS) ; refaire fall-01 sous Windows (CPU) donne 99 % de frames identiques en détection, à quelques pixels près. On garde les poses du repo.
+- GMDCSA-24 : règle de label dans la docstring de `src/external.py` (« Falling » = `chute` pendant 1 s puis `allongé`, car l'intervalle court jusqu'à la fin du clip ; « Sleeping » = `allongé`). Certains clips sont à 15 fps : les poses sont rééchantillonnées à 30 fps par interpolation.
+
 ### 7.2 P2 — Règles puis régression (branche `p2-rules-logreg`)
 
 Lis d'abord 7.0. Entrées : `processed/features.parquet` et `processed/windows_meta.parquet`.
