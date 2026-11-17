@@ -18,7 +18,7 @@ On travaille sur le **squelette 2D** (17 points du corps), pas sur les pixels : 
 
 ## 3. Démarrer (tout est automatisé)
 
-Prérequis : Mac, `git`, `make` et [`uv`](https://docs.astral.sh/uv/) (`brew install uv`). Rien d'autre à télécharger à la main.
+Prérequis : Mac (testé sur Apple Silicon), `git`, `make` et [`uv`](https://docs.astral.sh/uv/) (`brew install uv`), et un accès en écriture au repo GitHub (à demander au propriétaire). Rien d'autre à télécharger à la main : `uv` installe Python 3.12 tout seul.
 
 ```bash
 git clone https://github.com/Cdr-23/Fall_detection && cd Fall_detection
@@ -44,7 +44,7 @@ Ne pas lancer `make pose` sans nécessité : le résultat est partagé, et deux 
 
 **Les données brutes (pour info)**
 - URFD : 70 MP4 (640×240 : profondeur à gauche, **RGB à droite**) + 2 CSV de labels. Les frames des vidéos correspondent aux labels (vérifié : 11 936 frames, 0 écart). Licence CC BY-NC-SA 4.0 : Kwolek & Kepski, 2014, https://fenix.ur.edu.pl/mkepski/ds/uf.html
-- GMDCSA-24 : ~160 clips, 4 acteurs, 3 domiciles, licence CC BY 4.0, DOI 10.5281/zenodo.13354453. Structure des dossiers et des CSV pas encore inspectée.
+- GMDCSA-24 (`make data-gmdcsa`, télécharge seulement le zip ; ensuite `cd data/raw/gmdcsa24 && unzip -q GMDCSA24-v2.1.zip`) : 160 clips MP4 (79 chutes, 81 ADL), 4 sujets, 3 domiciles, licence CC BY 4.0, DOI 10.5281/zenodo.13354453. Vérifié : le zip est intact. Structure : `<dossier>/Subject N/Fall/NN.mp4`, `Subject N/ADL/NN.mp4`, plus `Subject N/Fall.csv` et `ADL.csv`. Les vidéos sont en **1280×720, ~30 fps, image RGB complète** (pas de profondeur : ne pas recadrer comme pour URFD). Les CSV ont les colonnes `File Name, Length (seconds), Time of Recording, Attire, Description, Classes` ; `Classes` donne des intervalles en secondes, par ex. `Falling (SW)[3.4 to 6]; Sitting[0 to 3.4]` ou `Sitting[0 to 1]; Sleeping[2 to 8]`. Attention : « Falling » court jusqu'à la fin du clip (chute + sol), donc c'est plus grossier que les labels d'URFD. `src/extract_pose.py` ne gère pas ce format (il lit les MP4 d'URFD et garde la moitié droite) : il faut le généraliser avant de s'en servir.
 - CAUCAFall (optionnel, 8,3 Go, pas sans accord de l'équipe) : `curl -fL -o data/raw/caucafall.zip "https://data.mendeley.com/public-api/zip/7w7fccy7ky/download/5"`. 100 vidéos, 10 sujets, CC BY 4.0.
 - `data/` est ignoré par git ; les poses (`poses/`) sont, elles, suivies.
 
@@ -68,23 +68,24 @@ L'alerte se déclenche sur `chute`. `allongé` sert au temps passé au sol.
 |---|---|---|---|
 | Entraînement + validation croisée | **URFD** (caméra 0) | 70 séquences (30 chutes, 40 ADL), labels par frame | `data/raw/` (MP4, 115 Mo) |
 | Test externe | **GMDCSA-24** | ~160 clips, 4 acteurs, 3 domiciles | `data/raw/gmdcsa24/` (1,1 Go) |
-| Test final | **Vidéos filmées par l'équipe** | chutes et activités dans un environnement clair | fournies par l'équipe, à déposer dans `data/own/` |
+| Test final | **Vidéos filmées par l'équipe** | chutes et activités dans un environnement clair | `data/own/` (voir format ci-dessous) |
 | En attente | CAUCAFall | 8,3 Go, trop lourd pour le disque | décision à prendre |
 
-- `data/` est exclu de git (`.git/info/exclude`). Chacun télécharge de son côté avec `src/download.py`.
-- Les poses extraites (quelques Mo) sont partageables.
+- `data/` est exclu de git (`.gitignore`). Les données brutes se téléchargent avec `make data` (voir section 3). Les poses extraites (`poses/`, 6 Mo) sont suivies par git.
 - IKAR (AGH Cracovie, 278 vidéos de chutes, sans activités du quotidien) est écarté : on n'en a pas besoin, les vidéos de l'équipe le remplacent.
-- URFD : tout le monde le télécharge. GMDCSA-24 : seulement P1, qui partage les poses extraites (quelques Mo).
+- **Personne n'a besoin de télécharger quoi que ce soit pour coder P2, P3, P4** : les poses sont dans le repo. `make data` (URFD, 115 Mo) ne sert qu'à la démo et aux visuels ; GMDCSA-24 (1,1 Go) ne sert qu'au test externe.
 - Les labels n'ont pas le même format selon le dataset : une règle unique « fenêtre = chute ? » est à écrire et à documenter.
 - Les datasets sont sous licence CC BY (-NC-SA pour URFD) : à citer dans le README.
 
+**Vidéos de l'équipe (proposition de format) :** fichiers `data/own/fall-01.mp4`, `adl-01.mp4`, ... en ~30 fps, personne entière dans le cadre, caméra fixe, au moins une chute jouée sur tapis et des activités normales (s'asseoir, se pencher, s'allonger volontairement). Un fichier `data/own/labels.csv` avec les colonnes `file, classes`, où `classes` suit le style de GMDCSA-24 : `Falling[3.4 to 4.4]; Lying[4.4 to 10]`. Sans labels, on peut quand même regarder la sortie des algos, mais pas calculer de métriques. Ces vidéos ne servent qu'à tester.
+
 ## 6. Pipeline commun (déjà fixé)
 
-1. **Pose :** YOLOv8n-pose (déjà entraîné, utilisé tel quel) → 17 points par frame, mis en cache dans `data/pose/`.
+1. **Pose :** YOLOv8n-pose (déjà entraîné, utilisé tel quel) → 17 points par frame, mis en cache dans `poses/`.
 2. **Préparation :** normalisation (centre = milieu des hanches, échelle = longueur du torse), interpolation des points manquants, fenêtres de 30 frames, pas de 5.
 3. **Features :** angle du torse, vitesse et accélération verticales des hanches, ratio hauteur/largeur de la boîte, hauteur de la tête, statistiques par fenêtre.
 
-Limite connue : YOLO détecte mal une personne allongée (~70 % des frames en MP4). À dire honnêtement dans les slides.
+Limite connue : YOLO détecte mal une personne allongée (une personne trouvée sur 65 % des frames allongées, contre 95 % des frames debout). À dire honnêtement dans les slides.
 
 ## 7. Les algorithmes et qui fait quoi
 
@@ -170,7 +171,7 @@ Déjà fait : téléchargement (`make data`), extraction des poses (`make pose`)
 4. **`src/metrics.py`** et **`src/evaluate.py`** : implémentent exactement les métriques de 7.0. `python src/evaluate.py results/<algo>_oof.parquet --tau 0.5` écrit `results/<algo>_metrics.csv` (une ligne par métrique). Teste-les sur le modèle naïf et sur des prédictions parfaites (tout doit sortir à 1). Commit : `Add shared evaluation metrics`.
 5. **Modèle naïf** `src/run_naive.py` : prédit toujours `pas chute`. Écrit `results/naive_oof.parquet` et `models/naive.joblib`. Commit : `Add naive baseline`.
 6. **Vérifications avant de dire « fini »** : nombre de fenêtres par classe et par fold (afficher le tableau) ; aucune séquence dans deux folds ; chaque fold contient des chutes ; l'ordre des lignes est cohérent entre les 4 fichiers ; la règle de label est écrite dans la docstring de `preprocess.py`.
-7. **Ensuite** (si le temps le permet) : `src/demo.py` (vidéo → poses → fenêtres → features → `predict_proba` de chaque algo → tableau de classes au fil du temps), et `make data-gmdcsa` + poses de GMDCSA-24.
+7. **Ensuite** (si le temps le permet) : généraliser l'extraction de poses à n'importe quelle vidéo (option « image complète » au lieu de la moitié droite, 1280×720 pour GMDCSA-24 et pour les vidéos de l'équipe), puis `src/demo.py` (vidéo → poses → fenêtres → features → `predict_proba` de chaque algo → tableau de classes au fil du temps). Pour GMDCSA-24 : `make data-gmdcsa`, décompresser, extraire les poses, convertir les intervalles de `Classes` en classes par frame.
 
 ### 7.2 P2 — Règles puis régression (branche `p2-rules-logreg`)
 
