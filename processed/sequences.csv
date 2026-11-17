@@ -1,0 +1,5 @@
+seq,kind,fold,n_frames,fall_start,fall_end
+adl-01,adl,3,150,,
+adl-21,adl,1,280,,
+fall-01,fall,0,160,83,112
+fall-02,fall,0,110,40,69
