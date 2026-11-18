@@ -1,0 +1,9 @@
+algo,alert,n_detected,n_falls,event_recall,delay_mean_s,false_alerts_adl,adl_seqs_with_false_alert,false_alerts_fall_seqs
+boosting,raw (p1 >= tau),29,30,0.9666666666666667,0.3689655172413792,15,15,1
+boosting,confirmed by lying,27,30,0.9,1.4024691358024692,7,7,0
+boosting_unweighted,raw (p1 >= tau),26,30,0.8666666666666667,0.4115384615384616,8,7,2
+boosting_unweighted,confirmed by lying,26,30,0.8666666666666667,1.3576923076923078,3,3,0
+cart,raw (p1 >= tau),29,30,0.9666666666666667,0.3689655172413792,35,30,7
+cart,confirmed by lying,23,30,0.7666666666666667,1.4884057971014493,16,16,0
+naive,raw (p1 >= tau),0,30,0.0,,0,0,0
+naive,confirmed by lying,0,30,0.0,,0,0,0

@@ -2,7 +2,7 @@
 
 Pipeline(SimpleImputer(median) -> GradientBoostingClassifier). GradientBoostingClassifier has no
 class_weight: classes are balanced with sample weights (as class_weight='balanced' in the tree),
-so p1 is inflated compared to the true fall rate; the alert threshold tau is swept by P5.
+which shifts p1 upward (moderately, see run_boosting_unweighted.py); tau is swept by P5.
 Grid: n_estimators {100, 200, 300} x max_depth {2, 3} x learning_rate {0.05, 0.1}, chosen by an
 inner split by sequence inside the training folds (see tree_tuning.py), never on the test fold.
 
