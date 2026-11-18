@@ -1,0 +1,14 @@
+# Shared parameters (seed, windows, folds, class map). Keep in sync with CLAUDE.md §4 and §6.
+seed: 42
+fps: 30                 # URFD camera 0 is 30 fps
+window: 30              # frames per window
+step: 5                 # stride between windows
+n_folds: 5              # StratifiedGroupKFold, group = sequence
+classes:                # output classes (index order used by all models)
+  pas_chute: 0          # URFD label -1
+  chute: 1              # URFD label 0
+  allonge: 2            # URFD label 1
+urfd_label_to_class:    # URFD frame label -> class index
+  -1: 0
+  0: 1
+  1: 2
