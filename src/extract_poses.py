@@ -23,7 +23,9 @@ from ultralytics import YOLO
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def extract_one(model: YOLO, video: Path, out: Path, device: str, batch: int) -> None:
+def extract_one(model: YOLO, video: Path, out: Path, device: str, batch: int,
+                crop_depth: bool = True) -> None:
+    """crop_depth=True: URFD layout (depth left, RGB right). False: full RGB frame."""
     cap = cv2.VideoCapture(str(video))
     fps = cap.get(cv2.CAP_PROP_FPS)
     kps, boxes = [], []
@@ -50,9 +52,10 @@ def extract_one(model: YOLO, video: Path, out: Path, device: str, batch: int) ->
         ok, frame = cap.read()
         if not ok:
             break
-        h, w = frame.shape[:2]
-        rgb = frame[:, w // 2 :]  # right half = RGB
-        buf.append(rgb)
+        if crop_depth:
+            h, w = frame.shape[:2]
+            frame = frame[:, w // 2 :]  # right half = RGB
+        buf.append(frame)
         if len(buf) == batch:
             flush()
     flush()

@@ -1,0 +1,2 @@
+algo,train,test,roc_auc,pr_auc,recall_chute,precision_chute,f1_chute,macro_f1,event_recall,delay_s_mean,false_alerts_per_h,n_false_alerts,adl_seconds,infer_ms_per_frame,model_size_bytes,params
+p2-logreg,URFD all 70 seq,GMDCSA-24,0.45041086276816933,0.35180603979923547,0.27381703470031543,0.41811175337186895,0.33091879527258866,0.3852737180459312,0.922077922077922,-0.3255108108613314,513.1651298903406,105,736.6049990200536,0.00010695898597039099,1809,"{""C"": 10.0, ""inner_f1_chute"": 0.5007}"

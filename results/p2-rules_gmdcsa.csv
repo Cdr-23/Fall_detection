@@ -1,0 +1,2 @@
+algo,train,test,roc_auc,pr_auc,recall_chute,precision_chute,f1_chute,macro_f1,event_recall,delay_s_mean,false_alerts_per_h,n_false_alerts,adl_seconds,infer_ms_per_frame,model_size_bytes,params
+p2-rules,URFD all 70 seq,GMDCSA-24,0.6621945151958996,0.4281403002601283,0.5097791798107255,0.5466847090663058,0.5275873326803787,0.47647787586460977,0.8961038961038961,0.1434303560327725,219.92791281014595,45,736.6049990200536,1.306487747386798e-05,80,"{""v_thr"": 3.0, ""t_thr"": 10, ""t_lie"": 10, ""h_lie"": 1.0, ""train_macro_f1"": 0.5565}"
