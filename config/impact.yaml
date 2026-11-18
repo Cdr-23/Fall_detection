@@ -1,0 +1,101 @@
+# Impact model (CLAUDE.md section 11; computed by src/impact.py).
+# Unit: 1,000 people living alone with a telecare subscription, over one year.
+# Every parameter has a value, a low/high range for the sensitivity analysis, and either a
+# `source` or `hypothesis: true`. No invented number is presented as a fact.
+
+population: 1000                      # people monitored (scale of the result, not a parameter)
+
+# --- Falls and long lies ---------------------------------------------------------------
+falls_per_person_year:
+  value: 0.6
+  low: 0.4
+  high: 1.0
+  source: >-
+    Fleming & Brayne, BMJ 2008 (people over 90, Cambridge): 60 % fell during the year (66/110).
+    Counted as one fall per faller, so a conservative value. https://doi.org/10.1136/bmj.a2227
+long_lie_share:
+  value: 0.30
+  low: 0.15
+  high: 0.45
+  source: >-
+    Fleming & Brayne, BMJ 2008: 30 % of fallers (20/66) lay on the floor for 1 h or more; long
+    lies were strongly associated with serious injury, hospital admission and moves to long
+    term care. https://doi.org/10.1136/bmj.a2227
+alarm_used_share:
+  value: 0.2
+  low: 0.0
+  high: 0.5
+  hypothesis: true
+  note: >-
+    Share of long lies already avoided today by the pendant alarm. Fleming & Brayne 2008:
+    alarms "were not used in most cases of falls that led to lying on the floor for a long
+    time" (no exact share given), so well below 0.5.
+camera_coverage:
+  value: 0.6
+  low: 0.4
+  high: 0.8
+  hypothesis: true
+  note: Share of falls that happen in a room watched by the camera (one camera, main room).
+
+# --- Our model (boosting + confirmation by lying, ~0.5 s; results/p5_notes.md) ----------
+detection_rate:
+  value: 0.675
+  low: 0.59
+  high: 0.90
+  source: >-
+    Measured, results/confirm_long.csv: GMDCSA-24 (external) 52/77 = 0.675; low = Le2i 22/37 =
+    0.59; high = URFD cross-validation 27/30 = 0.90 (same camera as training, optimistic).
+false_alerts_per_person_day:
+  value: 0.2
+  low: 0.05
+  high: 1.0
+  hypothesis: true
+  note: >-
+    Not measurable with our data: the public ADL clips are a few minutes of dense risky
+    movements (URFD: 7 false alerts in ~4 min, i.e. ~100/h, not a daily-life rate). To be
+    measured on long team videos; the sensitivity analysis shows where it breaks even.
+
+# --- Costs ------------------------------------------------------------------------------
+cost_hospitalized_fall_eur:
+  value: 11796
+  low: 11796
+  high: 11796
+  source: >-
+    Mounié et al., JAMDA 2023 (Santé publique France, French national health insurance data,
+    people 75+): incremental cost of 11,796 EUR in the year after a hospitalized fall-related
+    injury vs matched non-fallers. https://www.santepubliquefrance.fr/traumatismes/chute/article/costs-and-survival-patients-having-experienced-a-hospitalized-fall-related-injury-france-a
+avoidable_share_of_cost:
+  value: 0.2
+  low: 0.05
+  high: 0.4
+  hypothesis: true
+  note: >-
+    Share of that cost avoided when a long lie is cut short by a fast alert. The link between
+    long lie and hospitalization is an association (Fleming & Brayne 2008), not a measured
+    causal effect: the main uncertainty of the model.
+cost_check_call_eur:
+  value: 3.0
+  low: 2.0
+  high: 6.0
+  hypothesis: true
+  note: A telecare operator calls the person back after each alert (~5 min of operator time).
+dispatch_share_of_false_alerts:
+  value: 0.05
+  low: 0.01
+  high: 0.15
+  hypothesis: true
+  note: Share of false alerts where the person does not answer and someone is sent.
+cost_dispatch_eur:
+  value: 141.8
+  low: 141.8
+  high: 241.0
+  source: >-
+    Fire service price for lifting a person with no rescue action: SDIS 81 (Tarn) 2024,
+    141.80 EUR; Calvados 241 EUR for lifting at home without transport (press, 2024).
+    https://www.sdis81.fr/sites/default/files/actes-reglementaires/64_reglement_prestations_payantes_pour_2024-tampon.pdf
+system_cost_per_person_year_eur:
+  value: 60
+  low: 30
+  high: 120
+  hypothesis: true
+  note: Camera + edge computing, amortized. For scale, a telecare subscription is ~20 EUR/month (operator offers, 2026).
