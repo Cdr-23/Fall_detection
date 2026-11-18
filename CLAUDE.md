@@ -42,37 +42,54 @@ Benchmarks : le modèle naïf détecte 0/30 chutes ; les règles à seuils (≈ 
 
 | Qui | Tâche |
 |---|---|
-| Aristote | README d'une page (anglais), modèle d'impact (v1 faite), relecture des chiffres |
+| Aristote | README (fait), modèle d'impact (fait), relecture des chiffres des slides avant le rendu |
 | **Alain et Jules** | **Vidéos de test (0.4), slides (0.5), vidéo de 2 min (0.6)** |
+
+**Répartition proposée entre Alain et Jules (à ajuster entre eux) :** les deux tournent ensemble (l'un filme, l'autre chute) ; **Alain** étiquette, traite les vidéos et fait la slide 6 ; **Jules** fait les slides 1-5 et 7-8 et monte la vidéo de 2 min. Une seule personne pousse sur la branche `p6-videos-slides` (Alain), pour éviter les conflits.
+
+**Ordre conseillé :** (1) installation et test sur 1 clip (0.4, étape 1) ; (2) tournage ; (3) en parallèle, les slides 1-5 et 7-8, qui ne dépendent pas des vidéos ; (4) traitement des vidéos, puis slide 6 et démo ; (5) relecture des chiffres par Aristote ; (6) rendu.
+
+**Format et rendu :** slides et vidéo en **anglais** (cours du MIT), adressées au décideur. Slides au format de votre choix (Google Slides ou PowerPoint), exportées en PDF dans `deliverables/slides.pdf` (commité). La vidéo (MP4) ne va pas sur GitHub : la mettre sur un Drive et coller le lien dans `deliverables/README.md`. Le rendu se fait sur Gradescope (syllabus du cours) : qui rend et à quelle heure, à confirmer avec Aristote.
+
+**Si quelque chose bloque** (installation, commande qui échoue, résultat bizarre) : le dire à Aristote plutôt que de contourner ; ne jamais modifier les modèles ni les résultats existants.
 
 ### 0.4 Alain et Jules : tourner et traiter les vidéos de test (« test ultime »)
 
 **But :** voir ce que sort chaque modèle sur nos propres vidéos (seul test vraiment à l'aveugle), et mesurer la confirmation longue (10-30 s au sol), impossible avec les datasets publics.
 
-**Tournage :**
-- Caméra fixe (téléphone sur un support), **à l'horizontale**, à ~1-1,5 m de haut, de côté ou en diagonale, **corps entier dans le cadre**, pièce bien éclairée. (URFD, sur lequel le modèle a appris, est filmé ainsi. 1 ou 2 clips avec la caméra en hauteur montreront la limite.)
+**Étape 1, installation (une fois) :** suivre la section 3 (Python 3.12, `pip install -r requirements.txt`), puis vérifier avec `python tests/test_metrics.py` (3 lignes `ok`). Il faut un accès en écriture au repo GitHub `Cdr-23/Fall_detection` (à demander à Aristote) et une connexion internet au premier lancement : le modèle de pose (`yolov8n-pose.pt`, 6,5 Mo) se télécharge tout seul. Créer les dossiers : `mkdir -p data/own results/own deliverables`.
+
+**Étape 2, tester le cadrage sur 1 clip avant de tout tourner :** filmer ~20 s de quelqu'un **debout qui marche** dans le cadre prévu, le mettre dans `data/own/test-00.mp4`, lancer `python src/demo.py data/own/test-00.mp4 --algos boosting` : le terminal affiche « person detected on X % of frames ». Nettement sous ~90 %, changer le cadrage ou la lumière. (Une personne au sol est souvent perdue par le détecteur : c'est normal, ne pas tester le cadrage sur une chute.) Supprimer ce clip d'essai ensuite.
+
+**Étape 3, tournage :**
+- Téléphone fixe sur un support, **à l'horizontale (paysage)**, à ~1-1,5 m de haut, de côté ou en diagonale, **corps entier dans le cadre**, pièce bien éclairée. (URFD, sur lequel le modèle a appris, est filmé ainsi. 1 ou 2 clips avec la caméra en hauteur montreront la limite.) N'importe quelle résolution et fréquence d'images : le code ramène tout à 30 images/s. Sur iPhone, choisir Réglages → Appareil photo → Formats → « Le plus compatible » (H.264).
 - **Chutes** (sur un matelas, en sécurité) : 5 à 10 clips, en avant, en arrière, sur le côté, depuis une chaise. **Rester au sol au moins 30 s** après chaque chute, sans se relever.
 - **Activités normales** : 5 à 10 clips d'**au moins 1-2 min en continu** : marcher, **se pencher pour ramasser un objet** (plusieurs fois), s'asseoir vite, s'allonger sur un lit ou un canapé.
-- Noms de fichiers **obligatoires** : `fall-01.mp4`, `fall-02.mp4`, ..., `adl-01.mp4`, ... (le mot `fall` ou `adl` dit au code si c'est une chute).
-- Mettre les vidéos dans `data/own/`. **Elles ne vont pas sur GitHub** (`data/` est ignoré : visages de l'équipe).
+- Noms de fichiers **exactement** de la forme `fall-01.mp4`, `fall-02.mp4`, ..., `adl-01.mp4` (avec le tiret : `fall01.mp4` ou `fall_01.mp4` seraient pris pour des activités normales). `.mov` marche aussi si le nom suit la même forme.
+- Ne filmer que des personnes d'accord. Les vidéos restent dans `data/own/` et **ne vont jamais sur GitHub** (`data/` est ignoré) ; les frises et squelettes, eux, ne montrent pas de visage.
 
-**Étiquettes :** un fichier `data/own/labels.csv` avec les colonnes `file,classes`, temps en secondes depuis le début du clip, par exemple :
+**Étape 4, étiquettes :** un fichier `data/own/labels.csv` avec les colonnes `file,classes`, temps en secondes depuis le début du clip (lus dans le lecteur vidéo, au dixième de seconde près), **en couvrant tout le clip jusqu'à sa durée réelle** (les secondes non couvertes sont ignorées) :
 ```
 file,classes
-fall-01.mp4,"Walking[0 to 4.2]; Falling[4.2 to 40]"
+fall-01.mp4,"Walking[0 to 4.2]; Falling[4.2 to 41.5]"
+fall-02.mp4,"Sitting[0 to 5]; Falling[5 to 38]"
 adl-01.mp4,"Walking[0 to 20]; Bending[20 to 23]; Walking[23 to 60]; Lying[60 to 90]"
+adl-02.mp4,"Walking[0 to 75]"
 ```
-Règle du code : un intervalle `Falling[a to b]` = `chute` pendant 1 s à partir de `a`, puis `allongé` jusqu'à `b` ; `Lying`/`Sleeping` = `allongé` ; tout le reste (`Walking`, `Bending`, `Sitting`...) = `pas chute`.
+Règle du code : `Falling[a to b]` = `chute` pendant 1 s à partir de `a` (début de la chute), puis `allongé` jusqu'à `b` (fin du clip) ; `Lying`/`Sleeping` = `allongé` ; tout le reste (`Walking`, `Bending`, `Sitting`...) = `pas chute`. Une faute de frappe dans `Falling` ou `Lying` donne silencieusement `pas chute` : relire le fichier. **Copier `labels.csv` dans `results/own/labels.csv`** pour le commiter (le dossier `data/` n'est pas sur GitHub).
 
-**Commandes** (environnement activé, voir section 3) :
+**Étape 5, commandes** (environnement activé) :
 ```bash
-python src/external.py own          # squelettes + fenêtres -> poses/own, processed/own
-python src/confirm_long.py          # confirmation 0,5 à 30 s au sol -> results/confirm_long.csv (lignes dataset = own)
-python src/demo.py data/own/fall-01.mp4 --labels "Walking[0 to 4.2]; Falling[4.2 to 40]"   # classe prédite au fil du temps, chaque modèle
+python src/external.py own          # squelettes + fenêtres -> poses/own, processed/own (quelques minutes)
+python src/confirm_long.py          # confirmation 0,5 à 30 s au sol, tous les datasets -> results/confirm_long.csv
+python src/demo.py data/own/fall-01.mp4 --labels "Walking[0 to 4.2]; Falling[4.2 to 41.5]" --algos naive,rules,logreg,cart,boosting,nn
 ```
-`demo.py` écrit `results/demo/<nom>.csv` et `.png` (frise : vérité vs prédiction de chaque modèle). `results/demo/` est ignoré par git : **copier dans `results/own/` les 2-3 frises utiles aux slides** et les commiter.
+- `demo.py` écrit `results/demo/<nom>.csv` et `.png` : une frise par modèle avec la classe prédite seconde par seconde (alerte brute, **sans** l'étape de confirmation). `results/demo/` est ignoré par git : **copier dans `results/own/` les 2-3 frises utiles aux slides**.
+- **Les chiffres de la slide 6** sont dans `results/confirm_long.csv`, lignes `dataset = own`, `algo = boosting`, `variant = strict` : pour `seconds_on_floor` = 0 (alerte seule), 0.5 (notre réglage mesuré), 10 et 30 (réglage produit), lire `falls_detected` / `falls_testable` et `false_alerts_adl` / `adl_clips`. Si le résultat est mauvais, le dire tel quel : c'est un test honnête, pas une démo truquée.
 
-**Règles :** ne rien régler (seuil, modèle) sur ces vidéos, sinon ce n'est plus un test ; ne pas relancer `src/extract_pose.py` sur URFD ; commiter `poses/own`, `processed/own`, `results/own/`, `results/confirm_long.csv`, sur une branche `p6-videos-slides`, sans mention de Claude dans les commits.
+**Règles :** ne rien régler (seuil, modèle) sur ces vidéos, sinon ce n'est plus un test ; ne pas relancer `src/extract_pose.py` sur URFD ; commiter `poses/own`, `processed/own`, `results/own/`, `results/confirm_long.csv`, `deliverables/`, sur la branche `p6-videos-slides`, sans mention de Claude dans les commits ; Aristote vérifie puis fusionne dans `main`.
+
+**Si le tournage prend du retard :** 3 chutes et 3 activités normales suffisent pour la slide 6 et la démo ; en dernier recours, la démo de la vidéo peut utiliser un clip de GMDCSA-24 (`python src/demo.py --poses poses/gmdcsa24/gmdcsa-s1-fall-01.parquet`), en le disant.
 
 ### 0.5 Alain et Jules : les slides (5 à 10, adressées à la BSPP ou à un opérateur de téléassistance)
 
@@ -81,17 +98,19 @@ La consigne du cours (document « Team project description », 15.071) : problè
 | # | Slide | Contenu et source |
 |---|---|---|
 | 1 | Le problème | chiffres SpF 2024, long séjour au sol et médaillon non utilisé (Fleming & Brayne) (message 1) |
-| 2 | La solution | caméra → squelette (vie privée) → modèle → alerte en 2 temps (schéma) |
-| 3 | Les données | URFD (entraînement, 70 vidéos), GMDCSA-24 et Le2i (tests externes), nos vidéos (test final) |
-| 4 | Les modèles comparés | 6 modèles, du naïf au réseau ; boosting retenu ; `results/pr_curves.png` |
-| 5 | Est-ce que ça marche | tableau 0.2 ; une image d'erreur (`results/errors/boosting_adl-05.png`) |
-| 6 | Test sur nos vidéos | 1-2 frises `results/own/*.png` (0.4) |
+| 2 | La solution | schéma à dessiner : caméra → squelette (vie privée) → modèle → détection → confirmation au sol → appel de vérification |
+| 3 | Les données | URFD (entraînement, 70 vidéos : 30 chutes, 40 activités), GMDCSA-24 (160 clips, 3 maisons) et Le2i (60 clips, 2 maisons) en tests externes, nos vidéos en test final |
+| 4 | Les modèles comparés | 6 modèles, du naïf au réseau ; tableau « The 6 models compared » du README ; boosting retenu |
+| 5 | Est-ce que ça marche | tableau 0.2 avec les fourchettes ; une image d'erreur (`results/errors/boosting_adl-05.png` : se pencher pris pour une chute) |
+| 6 | Test sur nos vidéos | chiffres de `confirm_long.csv` (0.4, étape 5) + 1-2 frises `results/own/*.png` |
 | 7 | Est-ce que ça compte | ~58 longs séjours au sol évités ; tableau des 3 scénarios (`results/impact.md`) ; `results/impact_break_even.png` (message 5) |
-| 8 | Recommandation et limites | pilote, confirmation longue + appel ; ce qu'on ne peut pas affirmer |
+| 8 | Recommandation et limites | pilote chez un opérateur pour mesurer le vrai taux de fausses alertes ; confirmation 10-30 s + appel ; limites (« Ce qu'on ne doit PAS dire ») |
+
+Tous les chiffres viennent de la section 0.2, du README et de `results/impact.md` : ne pas en inventer, ne pas en arrondir dans le sens qui arrange.
 
 ### 0.6 Vidéo de 2 minutes (pitch au décideur)
 
-~20 s le problème (une chute, personne pour aider) → ~30 s la solution (squelette, alerte en 2 temps) → ~40 s démo sur une de nos vidéos (frise `demo.py`) → ~20 s les chiffres (27/30 chutes, limites) → ~10 s la recommandation (pilote).
+En anglais, enregistrement d'écran avec voix off (ou face caméra + écran). ~20 s le problème (une chute, personne pour aider, chiffres SpF) → ~30 s la solution (squelette, alerte en 2 temps) → ~40 s démo sur une de nos vidéos : montrer la vidéo puis la frise `demo.py` (le visage peut apparaître si la personne est d'accord) → ~20 s les chiffres (27/30 chutes, limites) → ~10 s la recommandation (pilote). Exporter en MP4, lien dans `deliverables/README.md`.
 
 ## 1. Contexte du projet
 

@@ -207,5 +207,5 @@ What we **cannot** claim:
 
 **Still to do:** the ultimate test on the team's own videos (`data/own/` is empty: put the
 videos and `labels.csv` there, then `python src/external.py own`, `python src/confirm_long.py`
-and `python src/demo.py <video>`; stay on the floor >= 30 s after each fall), README, slides,
-2-minute video.
+and `python src/demo.py <video>`; stay on the floor >= 30 s after each fall), slides, 2-minute
+video (see CLAUDE.md, section 0).

@@ -141,6 +141,9 @@ def main():
         name = Path(args.video).stem
         crop = args.crop or ("right" if name.endswith("-cam0") else "full")
         poses = extract_pose.extract_video(args.video, seq=name, crop=crop)
+    print(f"person detected on {poses['person'].mean():.0%} of frames "
+          "(on a clip of someone standing or walking, well below ~90 % means bad framing or light;"
+          " a person lying on the floor is often missed)")
     if args.labels:
         poses = poses.drop(columns=["y", "label"], errors="ignore")
         poses["y"], _ = external.frame_labels(external.parse_classes(args.labels), len(poses))
