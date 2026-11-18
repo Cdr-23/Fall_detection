@@ -105,20 +105,54 @@ On URFD (out-of-fold), boosting false alerts go 15 → 7 (D = 1 s) → 5 (2 s) �
 - GMDCSA-24 labels are intervals: the fall class is approximated as the first second of the
   "Falling" interval (see `src/external.py`). The event metrics (fall start) do not depend on it.
 
+## 4 bis. Second external test: Le2i FDD, Home_01 + Home_02 (never tuned on it)
+
+60 clips from two other homes (37 falls, 23 ADL; 24 fps resampled to 30; Kaggle mirror of Le2i).
+Only the two home scenes were used: Lecture_room and Office have no annotations. The raw AVIs
+(uncompressed bitmaps) crash OpenCV here, so `src/le2i_convert.py` rewrites them to MP4 first.
+Labels: the annotated fall start, then the same rule as GMDCSA-24 (1 s `fall`, then `lying`).
+
+| Model | PR-AUC fall | Falls detected (tau 0.5) | False alerts (ADL clips alerted / 23) | + 1 s on the floor: falls / false alerts |
+|---|---|---|---|---|
+| Threshold rules | 0.12 | 21 / 37 | 17 (13) | — |
+| **Logistic regression** | 0.25 | **31 / 37** | 31 (18) | **32 / 35, 2** |
+| Decision tree | 0.12 | 24 / 37 | 36 (21) | — |
+| Gradient boosting | 0.30 | **17 / 37** | 7 (7) | 19 / 35, 0 |
+| Neural network | 0.15 | 23 / 37 | 29 (23) | — |
+
+(`results/external_le2i.csv`, `results/confirm_long.csv`; with confirmation, falls are counted on
+the 35 clips filmed long enough, and a fall counts as detected if the confirmed alert comes within
+the extended delay.)
+
+- The drop is even larger than on GMDCSA-24 (PR-AUC ≤ 0.30 for every model).
+- **The boosting misses more than half of the falls** (17 / 37): its few false alerts come from
+  being too cautious in a new room. Logistic regression keeps most falls (31 / 37).
+- With 1 s on the floor, logistic regression gives **32 / 35 falls and 2 false alerts**.
+
 ## 5. Conclusion
 
-**Retained model: gradient boosting (balanced) + alert confirmation by lying.** It has the best
-URFD results at the default threshold (29/30 falls, 15 false alerts; 27/30 and 7 with confirmation)
-and the fewest false alerts on the external set. **Runner-up: logistic regression** — same level
-once its threshold is tuned, 300× smaller, readable coefficients, and the best ranking on
-GMDCSA-24. If the decision-maker values explainability, it is a defensible choice.
+**Retained model: logistic regression + alert confirmation (the person stays ~1 s on the floor).**
+This changes the first conclusion, which was based on URFD and GMDCSA-24 only:
+
+| | URFD (CV) | GMDCSA-24 | Le2i |
+|---|---|---|---|
+| Logistic regression + 1 s on the floor: falls / false alerts | 13 / 14 testable, 17 | 55 / 76, 13 | 32 / 35, 2 |
+| Boosting + 1 s on the floor: falls / false alerts | 13 / 14 testable, 7 | 49 / 76, 8 | 19 / 35, 0 |
+
+- The boosting is the best model on URFD (cross-validation) but generalises worse: it misses
+  half of Le2i's falls. For a fall alarm, a missed fall is the costly error.
+- Logistic regression keeps the best fall recall on both external sets, has a 4 KB model and
+  readable coefficients (useful for the BSPP / operator), and the on-floor confirmation removes
+  most of its false alerts.
+- **Caveat:** this choice was made after looking at the two external sets, so they are no longer
+  a fully blind test. The team's own videos (`data/own/`) must stay untouched until the final
+  ultimate test, which becomes the only blind test.
 
 What we **cannot** claim:
-- A false-alert rate for real life: 4 minutes of ADL, and still far too many alerts per hour for
-  a dispatch service as is. A deployed system would need confirmation (lying, no movement, a call
-  to the person) before sending anyone.
-- Robustness across homes: one camera set-up for training, 70 sequences, and a clear drop on a
-  second dataset.
+- A false-alert rate for real life: a few minutes of ADL per dataset, mostly hard movements.
+  A deployed system would still need a check (call to the person) before sending anyone.
+- Confirmation longer than ~1-2 s: no dataset films the person long enough on the floor.
+- Robustness in general: three datasets, few people, and a clear drop each time the room changes.
 - The cost ratio R: it is a hypothesis until `config/impact.yaml` gives sourced values.
 
 **Still to do:** the ultimate test on the team's own videos (`data/own/` is empty: put the

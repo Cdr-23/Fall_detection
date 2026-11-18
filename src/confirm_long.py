@@ -11,7 +11,7 @@ so D cannot be tested beyond ~3 s on falls, and 10-30 s not at all. Falls are th
 only on the "testable" falls (filmed >= 1 s + D after the start); false alerts on all ADL clips
 (URFD ~8 s each, GMDCSA ~9 s each).
 
-URFD: out-of-fold predictions. GMDCSA-24: final models (models/*), never tuned on it.
+URFD: out-of-fold predictions. GMDCSA-24 and Le2i: final models (models/*), never tuned on them.
 Output: results/confirm_long.csv. Usage: python src/confirm_long.py
 """
 import sys
@@ -32,7 +32,7 @@ FPS, STRIDE, TOL = CFG["data"]["fps"], CFG["window"]["stride"], CFG["eval"]["eve
 
 
 def predictions(dataset):
-    p = PROCESSED if dataset == "urfd" else PROCESSED / "gmdcsa24"
+    p = PROCESSED if dataset == "urfd" else PROCESSED / dataset
     meta = pd.read_parquet(p / "windows_meta.parquet")
     seqs = pd.read_csv(p / "sequences.csv")
     out = {}
@@ -67,7 +67,7 @@ def score(oof, seqs, d, testable):
 
 def main():
     rows = []
-    for dataset in ["urfd", "gmdcsa24"]:
+    for dataset in ["urfd", "gmdcsa24", "le2i"]:
         preds, seqs = predictions(dataset)
         falls = seqs.dropna(subset=["fall_start"])
         after = (falls["n_frames"] - falls["fall_start"]) / FPS

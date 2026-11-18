@@ -80,8 +80,9 @@ L'alerte se déclenche sur `chute`. `allongé` sert au temps passé au sol.
 |---|---|---|---|
 | Entraînement + validation croisée | **URFD** (caméra 0) | 70 séquences (30 chutes, 40 ADL), labels par frame | `data/raw/` (MP4, 115 Mo) |
 | Test externe | **GMDCSA-24** | ~160 clips, 4 acteurs, 3 domiciles | `data/raw/gmdcsa24/` (1,1 Go) |
+| Test externe 2 | **Le2i FDD** (Home_01 + Home_02 seulement) | 60 clips (37 chutes, 23 ADL), 2 domiciles, 24 fps | `data/raw/le2i/` (2,8 Go, [Kaggle](https://www.kaggle.com/datasets/tuyenldvn/falldataset-imvia), compte requis) ; puis `python src/le2i_convert.py` et `python src/external.py le2i` |
 | Test final | **Vidéos filmées par l'équipe** | chutes et activités dans un environnement clair | `data/own/` (voir format ci-dessous) |
-| En attente | CAUCAFall | 8,3 Go, trop lourd pour le disque | décision à prendre |
+| En attente | CAUCAFall | 8,3 Go ; Mendeley en panne le 18/11 | non utilisé |
 
 - `data/` est exclu de git (`.gitignore`). Les données brutes se téléchargent avec `python src/download.py` (voir section 3). Les poses extraites (`poses/`, 6 Mo) sont suivies par git.
 - IKAR (AGH Cracovie, 278 vidéos de chutes, sans activités du quotidien) est écarté : on n'en a pas besoin, les vidéos de l'équipe le remplacent.
