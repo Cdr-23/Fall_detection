@@ -1,0 +1,6 @@
+algo,tau_final
+rules,0.05
+logreg,0.85
+cart,0.8
+boosting,0.6
+nn,0.3
