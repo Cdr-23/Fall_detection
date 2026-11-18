@@ -131,28 +131,22 @@ the extended delay.)
 
 ## 5. Conclusion
 
-**Retained model: logistic regression + alert confirmation (the person stays ~1 s on the floor).**
-This changes the first conclusion, which was based on URFD and GMDCSA-24 only:
+**Retained model: gradient boosting (balanced) + alert confirmation by lying.** It has the best
+URFD results at the default threshold (29/30 falls, 15 false alerts; 27/30 and 7 with confirmation)
+and the fewest false alerts on both external sets. **Runner-up: logistic regression** — same level
+once its threshold is tuned, 300× smaller, readable coefficients, and the best ranking on
+GMDCSA-24. If the decision-maker values explainability, it is a defensible choice.
 
-| | URFD (CV) | GMDCSA-24 | Le2i |
-|---|---|---|---|
-| Logistic regression + 1 s on the floor: falls / false alerts | 13 / 14 testable, 17 | 55 / 76, 13 | 32 / 35, 2 |
-| Boosting + 1 s on the floor: falls / false alerts | 13 / 14 testable, 7 | 49 / 76, 8 | 19 / 35, 0 |
-
-- The boosting is the best model on URFD (cross-validation) but generalises worse: it misses
-  half of Le2i's falls. For a fall alarm, a missed fall is the costly error.
-- Logistic regression keeps the best fall recall on both external sets, has a 4 KB model and
-  readable coefficients (useful for the BSPP / operator), and the on-floor confirmation removes
-  most of its false alerts.
-- **Caveat:** this choice was made after looking at the two external sets, so they are no longer
-  a fully blind test. The team's own videos (`data/own/`) must stay untouched until the final
-  ultimate test, which becomes the only blind test.
+The model is chosen on the URFD cross-validation, as planned; the external sets (GMDCSA-24,
+Le2i) are only used to measure how much performance drops in a new setting, not to pick the model.
 
 What we **cannot** claim:
-- A false-alert rate for real life: a few minutes of ADL per dataset, mostly hard movements.
-  A deployed system would still need a check (call to the person) before sending anyone.
-- Confirmation longer than ~1-2 s: no dataset films the person long enough on the floor.
-- Robustness in general: three datasets, few people, and a clear drop each time the room changes.
+- A false-alert rate for real life: 4 minutes of ADL, and still far too many alerts per hour for
+  a dispatch service as is. A deployed system would need confirmation (lying, no movement, a call
+  to the person) before sending anyone.
+- Robustness across homes: one camera set-up for training, 70 sequences, and a clear drop on the
+  two external datasets. On Le2i (camera placed high), the boosting misses more than half of the
+  falls (17 / 37, section 4 bis): training on more camera set-ups is the first improvement to make.
 - The cost ratio R: it is a hypothesis until `config/impact.yaml` gives sourced values.
 
 **Still to do:** the ultimate test on the team's own videos (`data/own/` is empty: put the
