@@ -24,6 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import external  # noqa: E402
 import preprocess  # noqa: E402
 from features import window_features  # noqa: E402
+from features_ctx import context_features  # noqa: E402
 from preprocess import CFG, ROOT  # noqa: E402
 
 OUT = ROOT / "results" / "demo"
@@ -58,6 +59,9 @@ def video_windows(poses):
     meta = pd.DataFrame(meta)
     idx = pd.Index(prep["frames"]).get_indexer(meta["start_frame"])
     feats = window_features(prep, idx)
+    # context columns (P7, features_ctx.py) appended; the 26 base columns are unchanged, so
+    # models reading features.FEATURES get exactly the same input as before
+    feats = pd.concat([feats, context_features(prep, idx)], axis=1)
     feats.insert(0, "window_id", np.arange(len(meta)))
     return meta, feats, X
 
