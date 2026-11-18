@@ -59,6 +59,30 @@ then the fold is scored with it. `R` (cost of a missed fall / cost of a false al
   for +1 s of delay (1.4 s). It cuts the false alerts of every model by 40-55 %; the price is 1-8 missed
   falls, mostly because YOLO misses ~35 % of lying frames.
 
+## 3 bis. Longer confirmation: the person must stay on the floor D seconds (`src/confirm_long.py`)
+
+Alert only if, within 3 s of a fall candidate, the windows stay classified `lying` for D seconds.
+Results in `results/confirm_long.csv` (strict variant; the "lenient" one, where a window with no
+detected person also counts as on the floor, gains 0-3 falls for 0-3 more false alerts).
+
+| GMDCSA-24 (final models) | raw alert | D = 0.5 s | D = 1 s | D = 2 s | D = 3 s |
+|---|---|---|---|---|---|
+| Boosting: false alerts (81 ADL clips) | 33 | 9 | 8 | 6 | 3 |
+| Boosting: falls detected / testable | 53 / 78 | 52 / 77 | 49 / 76 | 40 / 67 | 15 / 34 |
+| Logistic regression: false alerts | 60 | 15 | 13 | 6 | 4 |
+| Logistic regression: falls detected / testable | 63 / 78 | 58 / 77 | 55 / 76 | 41 / 67 | 15 / 34 |
+
+On URFD (out-of-fold), boosting false alerts go 15 → 7 (D = 1 s) → 5 (2 s) → 3 (3 s) → 0 (5 s).
+
+- Requiring ~1 s on the floor **divides the false alerts by 4** (boosting 33 → 8, logistic
+  regression 60 → 13 on GMDCSA-24) for a small loss of falls and ~2 s of delay. The false alerts
+  that remain are mostly people lying down on purpose.
+- **Beyond ~1 s the data cannot answer.** URFD stops filming 1.1-3.1 s after a fall starts and
+  GMDCSA-24 1.4-9.1 s after, so few falls are "testable" (filmed ≥ 1 s + D after the start), and
+  the drop of fall recall at D = 2-3 s mixes model errors with clips that end too early. ADL clips
+  last ~8-9 s, so a long D also removes false alerts partly because the clip ends. **10-30 s
+  cannot be tested at all**: it needs our own videos where the person stays on the floor.
+
 ## 4. External test: GMDCSA-24 (other room, camera and people; never tuned on it)
 
 | Model | PR-AUC fall URFD → GMDCSA | Falls detected (tau 0.5) | False alerts (ADL clips alerted / 81) |
