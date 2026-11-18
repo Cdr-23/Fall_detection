@@ -84,6 +84,36 @@ video, so a live system needs a small change and may do slightly worse. The aler
 More detail: [`results/p5_notes.md`](results/p5_notes.md) (analysis and conclusion),
 [`results/comparison.md`](results/comparison.md) (all tables), `results/*.png` (figures).
 
+## Work in progress: telling a fall from lying down on purpose
+
+**Where the false alerts come from.** The model alone mistakes bending down quickly for a fall,
+because over one second of skeleton both are the same movement. The confirmation step removes
+these: the person gets up again. **The 7 false alerts left on URFD all come from people lying
+down on purpose** (on a bed, a sofa or the floor): a quick movement followed by lying down looks
+exactly like a fall followed by time on the floor.
+
+**What we are testing.** Two ideas, each giving the model one piece of information it lacks
+today:
+1. **Height above the floor.** After a fall the body is at floor level; on a bed it is higher.
+   The floor level is estimated automatically from the person's ankles while they were standing,
+   with no set-up in the home.
+2. **A longer look back (3 s instead of 1 s).** Lying down on purpose is controlled: people sit
+   first and go down slowly. A fall is sudden and goes all the way down at once.
+
+**How we test it, without fooling ourselves.** With only 7 false alerts left, it would be easy to
+tune a fix until they disappear and learn those 7 videos by heart. So the new measures are
+defined in advance and never adjusted to the results. The model is retrained exactly as before
+(same windows, same 5 folds, same settings), and judged on the two datasets from other homes
+(GMDCSA-24, Le2i), on which nothing is tuned. We test each idea alone and both together, so we
+know which one helps. The work runs on a separate branch (`p7-context-floor`) and does not touch
+the retained model: we will only switch if it clearly helps in the other homes, and we will
+report the result either way.
+
+**Not covered.** Someone lying down on purpose on the floor still looks like a fall, and a person
+who falls onto their bed looks like someone going to bed. In a deployed system, the operator's
+check call before sending anyone remains the safety net; marking the bed and sofa areas when the
+camera is installed is a simple product option for the pilot.
+
 ## Reproduce
 
 Python 3.12, Mac / Linux / Windows; no GPU and no download needed (the skeletons are in the repo).
