@@ -3,7 +3,8 @@
 **What it does.** A camera films the home of an older person living alone. Every second, the
 system says whether the person is *not falling*, *falling* or *lying on the floor*, and raises an
 alert when they fall. Only the body's skeleton is kept, never the image (privacy), and it runs on
-an ordinary computer. Target users: telecare operators and the Paris fire brigade (BSPP).
+an ordinary computer. Target users: telecare operators, who call the person after an alert and
+send help if needed.
 MIT Sloan 15.071 *The AI Edge*, Project 1, November 2026.
 
 ## How it works

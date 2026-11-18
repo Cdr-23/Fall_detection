@@ -69,7 +69,7 @@ row from this table would be choosing on the test folds. Report them side by sid
 choose the operating point (`tau`, confirmation or not) on validation folds and on cost.
 
 - **False alerts halved** for ~1 s of extra delay, negligible next to a time on the floor
-  counted in minutes or hours: this is the decision-relevant trade-off for the BSPP.
+  counted in minutes or hours: this is the decision-relevant trade-off for a telecare operator.
 - **The 2 falls lost by the boosting are a URFD artefact:** `fall-13` and `fall-21` end less
   than 1.5 s after the fall, so there is no time to see the person on the floor. A real camera
   keeps filming. (`fall-03` is missed in both cases: `p1` never exceeds 0.02.)

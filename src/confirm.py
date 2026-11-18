@@ -2,8 +2,8 @@
 
 Why: at tau = 0.5 most false alerts are confident (p1 ~ 0.85) and come from fast sitting or
 bending, which look like a fall within one second of skeleton. What separates them from a real
-fall is what happens next: after a fall the person stays on the floor. For the BSPP, waiting
-2-3 s more is negligible next to a time on the floor counted in hours.
+fall is what happens next: after a fall the person stays on the floor. For a telecare operator,
+waiting 2-3 s more is negligible next to a time on the floor counted in hours.
 
 Rule (applied per sequence, on the windows in time order; works for any algorithm's OOF):
   - candidate  = a window with p1 >= tau;

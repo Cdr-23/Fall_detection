@@ -132,7 +132,7 @@ Il faut pour ça un script `src/demo.py` qui prend une vidéo et rend, pour chaq
 ## 11. Livrables finaux (répartition : voir section 0.3)
 
 - README d'une page pour un data scientist, code relançable avec un seul `make`.
-- 5 à 10 slides adressées au décideur (BSPP ou opérateur de téléassistance).
+- 5 à 10 slides adressées au décideur (opérateur de téléassistance).
 - Vidéo de 2 minutes.
 - Modèle d'impact (`config/impact.yaml`) : aucun chiffre inventé, chaque paramètre est sourcé ou marqué « hypothèse », avec analyse de sensibilité.
 

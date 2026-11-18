@@ -45,8 +45,8 @@ model (section 4 ter) gives **R ≈ 70**; lower values are shown for sensitivity
 - With a tuned tau (0.85-0.90), **logistic regression matches the boosting** (28/30 and 16 false
   alerts vs 27/30 and 15): its weakness at tau = 0.5 was the threshold, not the model.
 - The network is the least stable: its best tau jumps from 0.1 to 0.95 with R.
-- The choice of tau is a business decision: it should be set with the BSPP from the real cost of
-  a useless dispatch vs an hour on the floor (`tau_tradeoff.png` shows the whole trade-off).
+- The choice of tau is a business decision: it should be set with the telecare operator from the
+  real cost of a useless call or dispatch vs an hour on the floor (`tau_tradeoff.png` shows the whole trade-off).
 
 ## 3. Errors (`results/errors.csv`, `results/errors/`)
 

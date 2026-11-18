@@ -91,7 +91,7 @@ python src/demo.py data/own/fall-01.mp4 --labels "Walking[0 to 4.2]; Falling[4.2
 
 **Si le tournage prend du retard :** 3 chutes et 3 activités normales suffisent pour la slide 6 et la démo ; en dernier recours, la démo de la vidéo peut utiliser un clip de GMDCSA-24 (`python src/demo.py --poses poses/gmdcsa24/gmdcsa-s1-fall-01.parquet`), en le disant.
 
-### 0.5 Alain et Jules : les slides (5 à 10, adressées à la BSPP ou à un opérateur de téléassistance)
+### 0.5 Alain et Jules : les slides (5 à 10, adressées à un opérateur de téléassistance)
 
 La consigne du cours (document « Team project description », 15.071) : problème, solution IA, impact, recommandations ; s'adresser au décideur, pas à un data scientist ; « un modèle simple qui règle un vrai problème vaut mieux qu'un système complexe ». Proposition :
 
@@ -114,8 +114,8 @@ En anglais, enregistrement d'écran avec voix off (ou face caméra + écran). ~2
 
 ## 1. Contexte du projet
 
-- **Problème :** les relevages de personnes âgées qui ont chuté représentent ~20 % des interventions SSUAP à la BSPP (11e compagnie). La téléassistance actuelle (bouton, médaillon) génère trop de déclenchements intempestifs, la levée de doute est faible, et on ne connaît ni l'heure de la chute ni le temps passé au sol.
-- **Décideur visé :** la BSPP, ou un opérateur de téléassistance.
+- **Problème :** la téléassistance actuelle repose sur un bouton ou un médaillon que la personne doit déclencher elle-même. Après une chute, il n'est souvent ni porté ni pressé (Fleming & Brayne, BMJ 2008) ; l'opérateur ne sait ni qu'il y a eu chute, ni depuis combien de temps la personne est au sol, et il reçoit aussi des déclenchements intempestifs.
+- **Décideur visé :** un opérateur de téléassistance (ses abonnés sont des personnes âgées vivant seules). En cas d'alerte, il appelle la personne puis, si besoin, envoie un proche, une aide à domicile ou les secours.
 - **Grille du cours (15.071) :** (i) quel problème ? (ii) que peut faire l'IA ? (iii) est-ce que ça marche, contre quels benchmarks ? (iv) est-ce que ça compte, en coûts, risque, qualité de service ?
 - **Principe :** un modèle simple et bien évalué vaut mieux qu'un système complexe flou.
 - **Source de départ :** la note « Détection automatique de chutes par computer vision » (Polytechnique, 2025). Elle ne cite aucun dataset.
