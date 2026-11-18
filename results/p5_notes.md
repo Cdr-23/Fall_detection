@@ -28,15 +28,19 @@ movements). All models are fast enough for real time (≤ 1 ms per window).
 ## 2. Alert threshold (tau) without the test fold
 
 For each fold, tau minimises `R × missed falls + false alerts` on the 4 other folds' predictions,
-then the fold is scored with it. `R` (cost of a missed fall / cost of a false alert) is a
-**business hypothesis**, not a sourced number (`config/impact.yaml` is still to come):
+then the fold is scored with it. `R` = cost of a missed fall / cost of a false alert. The impact
+model (section 4 ter) gives **R ≈ 70**; lower values are shown for sensitivity:
 
-| Model | R = 1 | R = 3 | R = 10 | R = 30 |
-|---|---|---|---|---|
-| Logistic regression | 24/30, 8 FA | 28/30, 12 FA | 28/30, 16 FA | 28/30, 23 FA |
-| Decision tree | 28/30, 30 FA | 29/30, 31 FA | 29/30, 31 FA | 29/30, 43 FA |
-| Gradient boosting | 23/30, 6 FA | 27/30, 15 FA | 27/30, 15 FA | 27/30, 15 FA |
-| Neural network | 20/30, 6 FA | 20/30, 11 FA | 25/30, 31 FA | 28/30, 34 FA |
+| Model | R = 1 | R = 3 | R = 10 | R = 30 | **R = 70 (impact)** |
+|---|---|---|---|---|---|
+| Logistic regression | 24/30, 8 FA | 28/30, 12 FA | 28/30, 16 FA | 28/30, 23 FA | 28/30, 36 FA |
+| Decision tree | 28/30, 30 FA | 29/30, 31 FA | 29/30, 31 FA | 29/30, 43 FA | 29/30, 43 FA |
+| Gradient boosting | 23/30, 6 FA | 27/30, 15 FA | 27/30, 15 FA | 27/30, 15 FA | 27/30, 15 FA |
+| Neural network | 20/30, 6 FA | 20/30, 11 FA | 25/30, 31 FA | 28/30, 34 FA | 28/30, 34 FA |
+
+- **Link with the retained setting:** with R ≈ 70, the boosting's threshold chosen without the
+  test fold is 0.50-0.75 per fold (0.60 on all URFD), with the same 15 false alerts as at
+  tau = 0.5. The default tau = 0.5 used everywhere is therefore consistent with the impact model.
 
 - With a tuned tau (0.85-0.90), **logistic regression matches the boosting** (28/30 and 16 false
   alerts vs 27/30 and 15): its weakness at tau = 0.5 was the threshold, not the model.
@@ -100,8 +104,8 @@ On URFD (out-of-fold), boosting false alerts go 15 → 7 (D = 1 s) → 5 (2 s) �
   angle. The hand-made features (torso angle, hip speed, head height, all normalised by the torso
   length) transfer much better.
 - Boosting keeps the fewest false alerts (33, 28 clips out of 81); logistic regression keeps the
-  best ranking (0.45). With the tau chosen on URFD (0.85), logistic regression goes to 53/78 falls
-  and 26 false alerts, close to the boosting.
+  best ranking (0.45). At the boosting's threshold chosen on URFD with R ≈ 70 (0.60), it
+  detects 50/78 falls with 29 false alerts.
 - GMDCSA-24 labels are intervals: the fall class is approximated as the first second of the
   "Falling" interval (see `src/external.py`). The event metrics (fall start) do not depend on it.
 
@@ -136,7 +140,7 @@ a hypothesis in `config/impact.yaml`; full output in `results/impact.md`):
 - ~180 long lies (≥ 1 h on the floor; Fleming & Brayne, BMJ 2008), of which the camera would
   cut short **~58** (51 to 78 across scenarios): the health benefit, not converted to euros.
 - Value counted in euros: 11,796 EUR extra cost in the year after a hospitalized fall (Santé
-  publique France 2023) × a hypothetical 20 % avoided by a fast alert → ~138 k EUR. Deaths
+  publique France 2023) × a hypothetical 20 % avoided by a fast alert → ~136 k EUR. Deaths
   (risk × 2.14 after a hospitalized fall), care-home moves and quality of life are not counted:
   the euros are a lower bound.
 - **Everything depends on the real-life false-alert rate**, which public clips cannot measure.
@@ -145,10 +149,10 @@ a hypothesis in `config/impact.yaml`; full output in `results/impact.md`):
 | Scenario | False alerts per person | Avoidable share | Detection | Net value per person per year |
 |---|---|---|---|---|
 | Optimistic | one every 100 days | 40 % | 90 % | +291 EUR |
-| Central | one every 20 days | 20 % | 68 % | −107 EUR |
+| Central | one every 20 days | 20 % | 67 % | −108 EUR |
 | Pessimistic | one every 5 days | 5 % | 59 % | −1,802 EUR |
 
-- Break-even: **one false alert per person every ~47 days** (`impact_break_even.png`); the
+- Break-even: **one false alert per person every ~48 days** (`impact_break_even.png`); the
   most influential parameters are the false-alert rate, the dispatch share and the avoidable
   share of costs, all hypotheses (`impact_tornado.png`).
 - Cost ratio R (missed fall vs false alert) ≈ 70: a missed fall is much more costly, which
@@ -174,7 +178,8 @@ windows), the longest delay our datasets can validate. Boosting, raw alert → c
 
 | | URFD (CV) | GMDCSA-24 | Le2i |
 |---|---|---|---|
-| Falls detected | 29 / 30 → 27 / 30 | 53 / 78 → 52 / 77 | 17 / 37 → 22 / 37 |
+| Falls detected | 29 / 30 → 27 / 30 | 53 / 78 → 52 / 78 | 17 / 37 → 22 / 37 |
+| 95 % interval (confirmed) | 74-97 % | 56-76 % | 43-74 % |
 | False alerts (ADL clips) | 15 → 7 | 33 → 9 | 7 → 2 |
 | Mean delay | 0.4 s → 1.4 s | 0.3 s → 1.4 s | 0.2 s → 0.9 s |
 
@@ -192,6 +197,11 @@ What we **cannot** claim:
 - Robustness across homes: one camera set-up for training, 70 sequences, and a clear drop on the
   two external datasets. On Le2i (camera placed high), the boosting misses more than half of the
   falls (17 / 37, section 4 bis): training on more camera set-ups is the first improvement to make.
+- Precise rates: with 30 falls, 27/30 means 74-97 % (95 % Wilson interval); 52/78 means
+  56-76 %. Differences of a few falls between models are within this noise.
+- Strict real time: the skeleton is scaled by the median torso length of the **whole** video
+  (`src/preprocess.py`), which uses frames after the window. A live system needs a running
+  estimate (e.g. over the first seconds); results may be slightly optimistic.
 - The money: the impact model (section 4 ter) rests on hypotheses for the avoidable share of
   costs and for the daily-life false-alert rate, which decides whether the system pays off.
 

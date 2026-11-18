@@ -39,12 +39,13 @@ camera_coverage:
 
 # --- Our model (boosting + confirmation by lying, ~0.5 s; results/p5_notes.md) ----------
 detection_rate:
-  value: 0.675
+  value: 0.667
   low: 0.59
   high: 0.90
   source: >-
-    Measured, results/confirm_long.csv: GMDCSA-24 (external) 52/77 = 0.675; low = Le2i 22/37 =
-    0.59; high = URFD cross-validation 27/30 = 0.90 (same camera as training, optimistic).
+    Measured with confirmation (results/confirm_long.csv, confirm_summary.csv): GMDCSA-24
+    (external) 52 of 78 falls = 0.667; low = Le2i 22/37 = 0.59; high = URFD cross-validation
+    27/30 = 0.90 (same camera as training, optimistic).
 false_alerts_per_person_day:
   value: 0.05
   low: 0.01

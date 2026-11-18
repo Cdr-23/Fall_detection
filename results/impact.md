@@ -4,12 +4,12 @@ For 1000 people living alone with telecare, monitored for one year. Every parame
 
 ## When does it pay off?
 
-The decisive unknown is the **real-life false-alert rate**, which public videos cannot measure. With the central values, the system pays off if false alerts stay below **0.021 per person per day (one every 47 days)**.
+The decisive unknown is the **real-life false-alert rate**, which public videos cannot measure. With the central values, the system pays off if false alerts stay below **0.021 per person per day (one every 48 days)**.
 
 | Scenario | False alerts per person | Avoidable share of a hospitalized fall's cost | Detection rate | Long lies avoided | Net value per person per year |
 |---|---|---|---|---|---|
 | optimistic | one every 100 days | 40% | 90% | 78 | **+291 EUR** |
-| central | one every 20 days | 20% | 68% | 58 | **-107 EUR** |
+| central | one every 20 days | 20% | 67% | 58 | **-108 EUR** |
 | pessimistic | one every 5 days | 5% | 59% | 51 | **-1,802 EUR** |
 
 ## Health benefits not counted in euros
@@ -26,26 +26,26 @@ The decisive unknown is the **real-life false-alert rate**, which public videos 
 |---|---|
 | Long lies (≥ 1 h on the floor) | 180 |
 | Long lies avoided by the camera | 58 |
-| Value of avoided long lies | 137,589 EUR |
+| Value of avoided long lies | 135,958 EUR |
 | False alerts | 18,250 (cost 10.09 EUR each) |
 | Cost of false alerts | 184,142 EUR |
 | System cost | 60,000 EUR |
-| **Net value** | **-106,554 EUR (-107 EUR / person / year)** |
-| Break-even false-alert rate | 0.021 per person per day (one every 47 days) |
+| **Net value** | **-108,185 EUR (-108 EUR / person / year)** |
+| Break-even false-alert rate | 0.021 per person per day (one every 48 days) |
 | R = cost of a missed fall / cost of a false alert | 70 |
 
 ## Sensitivity (one parameter at a time, low → high)
 
 | Parameter | Range | Net value (EUR) | Kind |
 |---|---|---|---|
-| false_alerts_per_person_day | 0.01 – 0.2 | 40,760 → -658,981 | hypothesis |
-| dispatch_share_of_false_alerts | 0.01 – 0.15 | -3,040 → -365,339 | hypothesis |
-| avoidable_share_of_cost | 0.05 – 0.4 | -209,745 → 31,035 | hypothesis |
-| falls_per_person_year | 0.4 – 1.0 | -152,417 → -14,828 | sourced/measured |
-| long_lie_share | 0.15 – 0.45 | -175,348 → -37,760 | sourced/measured |
-| camera_coverage | 0.4 – 0.8 | -152,417 → -60,691 | hypothesis |
-| cost_dispatch_eur | 141.8 – 241.0 | -106,554 → -197,074 | sourced/measured |
-| system_cost_per_person_year_eur | 30.0 – 120.0 | -76,554 → -166,554 | hypothesis |
-| alarm_used_share | 0.0 – 0.5 | -72,157 → -158,150 | hypothesis |
-| cost_check_call_eur | 2.0 – 6.0 | -88,304 → -161,304 | hypothesis |
+| false_alerts_per_person_day | 0.01 – 0.2 | 39,129 → -660,612 | hypothesis |
+| dispatch_share_of_false_alerts | 0.01 – 0.15 | -4,671 → -366,970 | hypothesis |
+| avoidable_share_of_cost | 0.05 – 0.4 | -210,153 → 27,773 | hypothesis |
+| falls_per_person_year | 0.4 – 1.0 | -153,504 → -17,546 | sourced/measured |
+| long_lie_share | 0.15 – 0.45 | -176,164 → -40,206 | sourced/measured |
+| camera_coverage | 0.4 – 0.8 | -153,504 → -62,865 | hypothesis |
+| cost_dispatch_eur | 141.8 – 241.0 | -108,185 → -198,705 | sourced/measured |
+| system_cost_per_person_year_eur | 30.0 – 120.0 | -78,185 → -168,185 | hypothesis |
+| alarm_used_share | 0.0 – 0.5 | -74,195 → -159,169 | hypothesis |
+| cost_check_call_eur | 2.0 – 6.0 | -89,935 → -162,935 | hypothesis |
 | detection_rate | 0.59 – 0.9 | -123,880 → -60,691 | sourced/measured |

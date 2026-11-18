@@ -134,6 +134,15 @@ def event_metrics(oof, sequences, tau=CFG["eval"]["tau"], tol=CFG["eval"]["event
                 (fa & (seq == s)).any() for s in np.unique(seq[kind == "adl"])))}
 
 
+def wilson(k, n, z=1.96):
+    """95 % Wilson interval of a proportion k / n (e.g. falls detected): (low, high)."""
+    if n == 0:
+        return (np.nan, np.nan)
+    p = k / n
+    centre, half = (p + z * z / (2 * n)), z * np.sqrt(p * (1 - p) / n + z * z / (4 * n * n))
+    return ((centre - half) / (1 + z * z / n), (centre + half) / (1 + z * z / n))
+
+
 def evaluate(oof, sequences, tau=CFG["eval"]["tau"]):
     """All window and event metrics of one OOF table (dict)."""
     return {**window_metrics(oof, tau), **event_metrics(oof, sequences, tau)}

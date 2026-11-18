@@ -2,28 +2,28 @@
 
 ## URFD, out-of-fold, tau = 0.5
 
-| Model | PR-AUC fall | ROC-AUC fall | F1 fall | F1 lying | Falls detected | Delay (s) | False alerts ADL (raw, rate) | Latency (ms) | Size (KB) |
+| Model | PR-AUC fall | ROC-AUC fall | F1 fall | F1 lying | Falls detected (95 % interval) | Delay (s) | False alerts ADL (raw, rate) | Latency (ms) | Size (KB) |
 |---|---|---|---|---|---|---|---|---|---|
-| Naive | 0.07 ± 0.01 | 0.50 ± 0.00 | 0.00 ± 0.00 | 0.00 ± 0.00 | 0 / 30 | — | 0 (0 / h) | 0.20 | 1 |
-| Threshold rules | 0.12 ± 0.04 | 0.63 ± 0.07 | 0.24 ± 0.08 | 0.57 ± 0.15 | 28 / 30 | 0.60 | 30 (412 / h) | 0.16 | 0 |
-| Logistic regression | 0.62 ± 0.12 | 0.91 ± 0.04 | 0.54 ± 0.03 | 0.87 ± 0.06 | 29 / 30 | 0.35 | 37 (508 / h) | 0.69 | 4 |
-| Decision tree | 0.33 ± 0.09 | 0.83 ± 0.06 | 0.47 ± 0.13 | 0.86 ± 0.02 | 29 / 30 | 0.37 | 35 (481 / h) | 0.62 | 7 |
-| Gradient boosting | 0.67 ± 0.10 | 0.91 ± 0.08 | 0.65 ± 0.08 | 0.90 ± 0.01 | 29 / 30 | 0.37 | 15 (206 / h) | 1.01 | 1128 |
-| Neural network | 0.60 ± 0.12 | 0.88 ± 0.08 | 0.48 ± 0.13 | 0.88 ± 0.05 | 25 / 30 | 0.38 | 24 (330 / h) | 0.08 | 561 |
+| Naive | 0.07 ± 0.01 | 0.50 ± 0.00 | 0.00 ± 0.00 | 0.00 ± 0.00 | 0 / 30 (0%-11%) | — | 0 (0 / h) | 0.20 | 1 |
+| Threshold rules | 0.12 ± 0.04 | 0.63 ± 0.07 | 0.24 ± 0.08 | 0.57 ± 0.15 | 28 / 30 (79%-98%) | 0.60 | 30 (412 / h) | 0.16 | 0 |
+| Logistic regression | 0.62 ± 0.12 | 0.91 ± 0.04 | 0.54 ± 0.03 | 0.87 ± 0.06 | 29 / 30 (83%-99%) | 0.35 | 37 (508 / h) | 0.69 | 4 |
+| Decision tree | 0.33 ± 0.09 | 0.83 ± 0.06 | 0.47 ± 0.13 | 0.86 ± 0.02 | 29 / 30 (83%-99%) | 0.37 | 35 (481 / h) | 0.61 | 7 |
+| Gradient boosting | 0.67 ± 0.10 | 0.91 ± 0.08 | 0.65 ± 0.08 | 0.90 ± 0.01 | 29 / 30 (83%-99%) | 0.37 | 15 (206 / h) | 0.99 | 1128 |
+| Neural network | 0.60 ± 0.12 | 0.88 ± 0.08 | 0.48 ± 0.13 | 0.88 ± 0.05 | 25 / 30 (66%-93%) | 0.38 | 24 (330 / h) | 0.08 | 561 |
 
 Fold mean ± std over the 5 folds; counts pooled over the folds.
 
-## Alert threshold chosen without the test fold (R = cost missed fall / cost false alert, hypothesis)
+## Alert threshold chosen without the test fold (R = cost missed fall / cost false alert; R = 70 from the impact model, other values for sensitivity)
 
-| Model | R = 1 | R = 3 | R = 10 | R = 30 |
-|---|---|---|---|---|
-| Threshold rules | 28/30, 30 FA (tau 0.05-0.05) | 28/30, 30 FA (tau 0.05-0.05) | 28/30, 30 FA (tau 0.05-0.05) | 28/30, 30 FA (tau 0.05-0.05) |
-| Logistic regression | 24/30, 8 FA (tau 0.90-0.95) | 28/30, 12 FA (tau 0.90-0.90) | 28/30, 16 FA (tau 0.85-0.90) | 28/30, 23 FA (tau 0.05-0.90) |
-| Decision tree | 28/30, 30 FA (tau 0.80-0.85) | 29/30, 31 FA (tau 0.75-0.80) | 29/30, 31 FA (tau 0.75-0.80) | 29/30, 43 FA (tau 0.25-0.80) |
-| Gradient boosting | 23/30, 6 FA (tau 0.90-0.95) | 27/30, 15 FA (tau 0.50-0.75) | 27/30, 15 FA (tau 0.50-0.75) | 27/30, 15 FA (tau 0.50-0.75) |
-| Neural network | 20/30, 6 FA (tau 0.90-0.95) | 20/30, 11 FA (tau 0.70-0.95) | 25/30, 31 FA (tau 0.10-0.70) | 28/30, 34 FA (tau 0.10-0.30) |
+| Model | R = 1 | R = 3 | R = 10 | R = 30 | R = 70 |
+|---|---|---|---|---|---|
+| Threshold rules | 28/30, 30 FA (tau 0.05-0.05) | 28/30, 30 FA (tau 0.05-0.05) | 28/30, 30 FA (tau 0.05-0.05) | 28/30, 30 FA (tau 0.05-0.05) | 28/30, 30 FA (tau 0.05-0.05) |
+| Logistic regression | 24/30, 8 FA (tau 0.90-0.95) | 28/30, 12 FA (tau 0.90-0.90) | 28/30, 16 FA (tau 0.85-0.90) | 28/30, 23 FA (tau 0.05-0.90) | 28/30, 36 FA (tau 0.05-0.90) |
+| Decision tree | 28/30, 30 FA (tau 0.80-0.85) | 29/30, 31 FA (tau 0.75-0.80) | 29/30, 31 FA (tau 0.75-0.80) | 29/30, 43 FA (tau 0.25-0.80) | 29/30, 43 FA (tau 0.25-0.80) |
+| Gradient boosting | 23/30, 6 FA (tau 0.90-0.95) | 27/30, 15 FA (tau 0.50-0.75) | 27/30, 15 FA (tau 0.50-0.75) | 27/30, 15 FA (tau 0.50-0.75) | 27/30, 15 FA (tau 0.50-0.75) |
+| Neural network | 20/30, 6 FA (tau 0.90-0.95) | 20/30, 11 FA (tau 0.70-0.95) | 25/30, 31 FA (tau 0.10-0.70) | 28/30, 34 FA (tau 0.10-0.30) | 28/30, 34 FA (tau 0.10-0.30) |
 
-Final tau (all URFD OOF, R = 10): {'rules': 0.05, 'logreg': 0.85, 'cart': 0.8, 'boosting': 0.6, 'nn': 0.3}
+Final tau (all URFD OOF, R = 70): {'rules': 0.05, 'logreg': 0.05, 'cart': 0.3, 'boosting': 0.6, 'nn': 0.1}
 
 ## Errors at tau = 0.5 (sequence, models making it)
 
@@ -81,10 +81,10 @@ Final tau (all URFD OOF, R = 10): {'rules': 0.05, 'logreg': 0.85, 'cart': 0.8, '
 |---|---|---|---|---|---|---|---|
 | Naive | 0.07 | 0.00 | 0/78 | 0 (0) | 0.50 | 0/78 | 0 |
 | Threshold rules | 0.15 | 0.74 | 67/78 | 66 (53) | 0.05 | 67/78 | 66 |
-| Logistic regression | 0.45 | 0.73 | 63/78 | 60 (47) | 0.85 | 53/78 | 26 |
-| Decision tree | 0.22 | 0.71 | 66/78 | 77 (52) | 0.80 | 56/78 | 64 |
+| Logistic regression | 0.45 | 0.73 | 63/78 | 60 (47) | 0.05 | 75/78 | 82 |
+| Decision tree | 0.22 | 0.71 | 66/78 | 77 (52) | 0.30 | 68/78 | 85 |
 | Gradient boosting | 0.42 | 0.78 | 53/78 | 33 (28) | 0.60 | 50/78 | 29 |
-| Neural network | 0.18 | 0.72 | 54/78 | 63 (50) | 0.30 | 55/78 | 69 |
+| Neural network | 0.18 | 0.72 | 54/78 | 63 (50) | 0.10 | 59/78 | 74 |
 
 ## External test: Le2i FDD (Home_01 + Home_02) (final models, never tuned on it)
 
@@ -92,8 +92,8 @@ Final tau (all URFD OOF, R = 10): {'rules': 0.05, 'logreg': 0.85, 'cart': 0.8, '
 |---|---|---|---|---|---|---|---|
 | Naive | 0.07 | 0.00 | 0/37 | 0 (0) | 0.50 | 0/37 | 0 |
 | Threshold rules | 0.12 | 0.57 | 21/37 | 17 (13) | 0.05 | 21/37 | 17 |
-| Logistic regression | 0.25 | 0.58 | 31/37 | 31 (18) | 0.85 | 22/37 | 0 |
-| Decision tree | 0.12 | 0.55 | 24/37 | 36 (21) | 0.80 | 9/37 | 30 |
+| Logistic regression | 0.25 | 0.58 | 31/37 | 31 (18) | 0.05 | 37/37 | 27 |
+| Decision tree | 0.12 | 0.55 | 24/37 | 36 (21) | 0.30 | 30/37 | 38 |
 | Gradient boosting | 0.30 | 0.56 | 17/37 | 7 (7) | 0.60 | 16/37 | 6 |
-| Neural network | 0.15 | 0.57 | 23/37 | 29 (23) | 0.30 | 24/37 | 27 |
+| Neural network | 0.15 | 0.57 | 23/37 | 29 (23) | 0.10 | 27/37 | 25 |
 

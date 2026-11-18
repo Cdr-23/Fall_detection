@@ -47,11 +47,14 @@ Confirmation roughly halves the false alerts of every model, at the cost of 1 to
 **2. The retained model in other homes** (datasets it never saw, gradient boosting with
 confirmation):
 
-| Dataset | Falls detected | False alerts | Mean delay |
+| Dataset | Falls detected (range) | False alerts | Mean delay |
 |---|---|---|---|
-| URFD (training homes, cross-validation, for reference) | 27 / 30 | 7 (40 videos) | 1.4 s |
-| GMDCSA-24 (3 other homes) | 52 / 78 | 9 (81 videos) | 1.4 s |
-| Le2i (2 other homes, camera placed high) | 22 / 37 | 2 (23 videos) | 0.9 s |
+| URFD (training homes, cross-validation, for reference) | 27 / 30 (74-97 %) | 7 (40 videos) | 1.4 s |
+| GMDCSA-24 (3 other homes) | 52 / 78 (56-76 %) | 9 (81 videos) | 1.4 s |
+| Le2i (2 other homes, camera placed high) | 22 / 37 (43-74 %) | 2 (23 videos) | 0.9 s |
+
+In brackets: the 95 % uncertainty range of the detection rate. With so few falls, a difference
+of 1 or 2 falls between models is not meaningful.
 
 Performance drops when the room, the camera and the people change: this is the main limit.
 
@@ -64,16 +67,18 @@ call, sometimes a dispatch):
 | Scenario | False alerts per person | Net value per person per year |
 |---|---|---|
 | Optimistic | one every 100 days | +291 EUR |
-| Central | one every 20 days | −107 EUR |
+| Central | one every 20 days | −108 EUR |
 | Pessimistic | one every 5 days | −1,802 EUR |
 
-**It pays off if false alerts stay below about one per person every 47 days.** The euros only
+**It pays off if false alerts stay below about one per person every 48 days.** The euros only
 count part of the hospital cost (not deaths, care-home moves or quality of life), so they are a
 lower bound. Next step: a pilot with a telecare operator to measure the real false-alert rate.
 
 **Limits.** 70 training videos, all filmed by the same camera; performance drops in other homes;
 the daily-life videos only last a few minutes in total; the main error is bending down quickly,
-which looks like a fall over one second of skeleton.
+which looks like a fall over one second of skeleton; the skeleton is scaled using the whole
+video, so a live system needs a small change and may do slightly worse. The alert threshold
+(0.5) is consistent with the cost ratio of the impact model (a missed fall ≈ 70 false alerts).
 
 More detail: [`results/p5_notes.md`](results/p5_notes.md) (analysis and conclusion),
 [`results/comparison.md`](results/comparison.md) (all tables), `results/*.png` (figures).
