@@ -57,5 +57,5 @@ Possible next step (not done, would change the P4 input): add the hip trajectory
   early-stops on the validation PR-AUC of `fall` and adds weight decay. Out-of-fold, the two
   versions are equivalent — v1: PR-AUC 0.58 ± 0.17, 26 / 30 falls, 23 false alerts; v2:
   0.60 ± 0.13, 25 / 30, 24. v2 is kept for its steadier training, not for a better test score.
-- Large spread across folds (PR-AUC from 0.58 to 0.79 per fold): 70 sequences is small, a
+- Large spread across folds (PR-AUC from 0.44 to 0.79 per fold): 70 sequences is small, a
   neural network is the most sensitive model to it.
