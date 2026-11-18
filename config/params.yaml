@@ -11,3 +11,12 @@ pose:
 window:
   length: 30               # frames (~1 s)
   stride: 5
+preprocess:
+  min_conf: 0.3            # a keypoint below this confidence counts as missing
+  max_gap: 15              # interpolate gaps of at most this many frames (0.5 s)
+cv:
+  n_folds: 5               # StratifiedGroupKFold, group = sequence, stratified on kind
+eval:
+  tau: 0.5                 # default alert threshold on p1
+  event_tolerance: 44      # a fall is detected by a window ending in [s0, s0 + 44]
+  fa_merge: 60             # false alerts closer than this (frames) count as one
