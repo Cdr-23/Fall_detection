@@ -47,29 +47,38 @@ def predict_proba(feats: pd.DataFrame, X_seq: np.ndarray) -> np.ndarray:
     return _model.predict_proba(feats[FEATURES])
 
 
-def explain(model, X):
-    """SHAP on the final model (raw score per class), on the median-imputed features.
+def shap_values(model, X, columns=FEATURES):
+    """SHAP values (N, F, 3) of the final model (raw score per class) on the median-imputed
+    features, and the imputed features as a DataFrame.
 
     shap.TreeExplainer only supports a binary GradientBoostingClassifier. The multiclass raw
     score of class k is init_k + learning_rate * sum of the regression trees estimators_[:, k],
     and SHAP values are additive, so we explain each tree and sum: this is exact.
     """
     gb = model.named_steps["gb"]
-    Xi = pd.DataFrame(model.named_steps["impute"].transform(X), columns=FEATURES)
-    sv = np.zeros((len(Xi), len(FEATURES), gb.n_classes_))
+    Xi = pd.DataFrame(model.named_steps["impute"].transform(X[columns]), columns=columns)
+    sv = np.zeros((len(Xi), len(columns), gb.n_classes_))
     for k in range(gb.n_classes_):
         for tree in gb.estimators_[:, k]:
             sv[:, :, k] += shap.TreeExplainer(tree).shap_values(Xi.to_numpy())
     sv *= gb.learning_rate  # (N, F, 3)
-    imp = pd.DataFrame(np.abs(sv).mean(axis=0), index=FEATURES,
+    return sv, Xi
+
+
+def explain(model, X, columns=FEATURES, prefix="", title="gradient boosting, all 70 sequences"):
+    """SHAP on the final model -> results/<prefix>shap_importance.csv (mean |SHAP| per feature
+    and class) and results/<prefix>shap_summary.png (class `fall`). Defaults = the retained
+    model's files; other models pass their own columns and prefix."""
+    sv, Xi = shap_values(model, X, columns)
+    imp = pd.DataFrame(np.abs(sv).mean(axis=0), index=columns,
                        columns=["shap_notfall", "shap_fall", "shap_lying"])
     imp.index.name = "feature"
-    imp.sort_values("shap_fall", ascending=False).to_csv(RESULTS / "shap_importance.csv")
+    imp.sort_values("shap_fall", ascending=False).to_csv(RESULTS / f"{prefix}shap_importance.csv")
 
     shap.summary_plot(sv[:, :, 1], Xi, max_display=15, show=False)
     fig = plt.gcf()
-    fig.suptitle("SHAP values for class 'fall' (gradient boosting, all 70 sequences)")
-    fig.savefig(RESULTS / "shap_summary.png", dpi=120, bbox_inches="tight")
+    fig.suptitle(f"SHAP values for class 'fall' ({title})")
+    fig.savefig(RESULTS / f"{prefix}shap_summary.png", dpi=120, bbox_inches="tight")
     plt.close(fig)
     return imp
 

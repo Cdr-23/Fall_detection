@@ -1,0 +1,4 @@
+algo,n_features,latency_ms_per_window,model_size_kb
+boosting_floor,32,1.3514579995899112,1126.1279296875
+boosting_lookback,40,0.984874999630847,225.064453125
+boosting_ctx,46,0.976875499873131,386.548828125
