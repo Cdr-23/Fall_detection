@@ -196,13 +196,15 @@ Limite connue : YOLO détecte mal une personne allongée (une personne trouvée 
 
 Tous les modèles prennent les mêmes entrées et rendent les mêmes sorties (3 classes). Sans ça, la comparaison finale est impossible.
 
-| Qui | Tâche | Branche |
-|---|---|---|
-| **P1** | Fondations : fenêtres, features, folds, métriques, modèle naïf | `p1-foundations` |
-| **P2** | Règles à seuils, puis régression logistique | `p2-rules-logreg` |
-| **P3** | Arbre de décision (CART), puis gradient boosting + SHAP | `p3-trees` |
-| **P4** | Réseau de neurones sur les squelettes bruts | `p4-nn` |
-| **P5** | **À faire à la fin, tous ensemble** : comparaison de tous les algos | `p5-compare` |
+| Partie | Contenu | Code | Notes |
+|---|---|---|---|
+| **P1** | Fondations : fenêtres, features, folds, métriques, modèle naïf | `src/preprocess.py`, `features.py`, `metrics.py`, `run_naive.py` | — |
+| **P2** | Règles à seuils, puis régression logistique | `src/run_rules.py`, `run_logreg.py` | `results/p2_notes.md` |
+| **P3** | Arbre de décision (CART), puis gradient boosting + SHAP | `src/run_cart.py`, `run_boosting.py` | `results/p3_notes.md` |
+| **P4** | Réseau de neurones sur les squelettes bruts | `src/run_nn.py` | `results/p4_notes.md` |
+| **P5** | Comparaison, seuil, erreurs, tests externes, impact | `src/compare.py`, `confirm*.py`, `impact.py` | `results/p5_notes.md` |
+
+Toutes ces parties sont terminées et fusionnées dans `main` ; les anciennes branches ont été supprimées (la version d'origine d'Alain pour P2 est gardée sous le tag `archive/p2-rules-alain`).
 
 **Si tu es un Claude lancé par Pn : ne modifie que les fichiers de ta partie, sur ta branche. Si tu as besoin d'un changement chez un autre, dis-le à ton utilisateur.**
 
@@ -261,7 +263,7 @@ L'ordre des lignes est le même dans `windows_meta`, `features`, `X_seq` et `val
 - **Un commit à chaque fois qu'un algo est fini d'être codé**, et un commit par étape terminée en général.
 - **Aucune mention de Claude dans les commits** : pas de ligne `Co-Authored-By`, pas de « Generated with ».
 - Messages courts, à l'impératif, en anglais (ex. `Add logistic regression baseline`).
-- Une branche par personne (`p1-data`, `p2-rules`, ...), fusion dans `main` quand l'algo marche.
+- Une branche par tâche (ex. `p6-videos-slides`), fusion dans `main` quand c'est fini et vérifié.
 - Ne jamais commiter de données brutes ni de vidéos.
 
 **Méthode :**
