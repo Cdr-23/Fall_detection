@@ -140,6 +140,22 @@ GMDCSA-24. If the decision-maker values explainability, it is a defensible choic
 The model is chosen on the URFD cross-validation, as planned; the external sets (GMDCSA-24,
 Le2i) are only used to measure how much performance drops in a new setting, not to pick the model.
 
+**Confirmation delay: measured vs product setting.** The results above use ~0.5 s lying (3
+windows), the longest delay our datasets can validate. Boosting, raw alert → confirmed:
+
+| | URFD (CV) | GMDCSA-24 | Le2i |
+|---|---|---|---|
+| Falls detected | 29 / 30 → 27 / 30 | 53 / 78 → 52 / 77 | 17 / 37 → 22 / 37 |
+| False alerts (ADL clips) | 15 → 7 | 33 → 9 | 7 → 2 |
+| Mean delay | 0.4 s → 1.4 s | 0.3 s → 1.4 s | 0.2 s → 0.9 s |
+
+(Le2i gains falls because a confirmed alert may come a little later than the raw one.) For the
+deployed product we recommend a **longer delay, 10-30 s on the floor**, as a setting chosen with
+the operator: after a real fall the person stays down for minutes, so the cost is a few seconds,
+and most remaining false alerts (bending, sitting) do not last that long. This is **not measured**:
+public clips end 2-4 s after the fall. It will be scored on the team videos (`src/confirm_long.py`
+computes 10, 20 and 30 s as soon as `processed/own` exists).
+
 What we **cannot** claim:
 - A false-alert rate for real life: 4 minutes of ADL, and still far too many alerts per hour for
   a dispatch service as is. A deployed system would need confirmation (lying, no movement, a call
@@ -150,5 +166,6 @@ What we **cannot** claim:
 - The cost ratio R: it is a hypothesis until `config/impact.yaml` gives sourced values.
 
 **Still to do:** the ultimate test on the team's own videos (`data/own/` is empty: put the
-videos and `labels.csv` there, then `python src/external.py own` and `python src/demo.py <video>`),
+videos and `labels.csv` there, then `python src/external.py own`, `python src/confirm_long.py`
+and `python src/demo.py <video>`; stay on the floor >= 30 s after each fall),
 `config/impact.yaml`, slides.

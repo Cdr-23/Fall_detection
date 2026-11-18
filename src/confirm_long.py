@@ -11,7 +11,11 @@ so D cannot be tested beyond ~3 s on falls, and 10-30 s not at all. Falls are th
 only on the "testable" falls (filmed >= 1 s + D after the start); false alerts on all ADL clips
 (URFD ~8 s each, GMDCSA ~9 s each).
 
-URFD: out-of-fold predictions. GMDCSA-24 and Le2i: final models (models/*), never tuned on them.
+Longer delays (10, 20, 30 s: the product setting we recommend) are only scored on the team videos
+(data/own, processed/own), which must keep the person on the floor >= 30 s after each fall and
+last several minutes for the ADL; on the public sets the clips end before.
+
+URFD: out-of-fold predictions. GMDCSA-24, Le2i, own: final models (models/*), never tuned on them.
 Output: results/confirm_long.csv. Usage: python src/confirm_long.py
 """
 import sys
@@ -28,6 +32,7 @@ from metrics import CFG, ROOT, event_metrics  # noqa: E402
 PROCESSED, RESULTS = ROOT / "processed", ROOT / "results"
 ALGOS = ["logreg", "cart", "boosting", "nn"]
 DURATIONS = [0, 0.5, 1, 2, 3, 5]          # seconds on the floor; 0 = raw alert, no confirmation
+LONG = [10, 20, 30]                       # product setting, only on the team videos (data/own)
 FPS, STRIDE, TOL = CFG["data"]["fps"], CFG["window"]["stride"], CFG["eval"]["event_tolerance"]
 
 
@@ -67,12 +72,15 @@ def score(oof, seqs, d, testable):
 
 def main():
     rows = []
-    for dataset in ["urfd", "gmdcsa24", "le2i"]:
+    datasets = ["urfd", "gmdcsa24", "le2i"]
+    if (PROCESSED / "own" / "windows_meta.parquet").exists():
+        datasets.append("own")                # built by: python src/external.py own
+    for dataset in datasets:
         preds, seqs = predictions(dataset)
         falls = seqs.dropna(subset=["fall_start"])
         after = (falls["n_frames"] - falls["fall_start"]) / FPS
         n_adl = int((seqs["kind"] == "adl").sum())
-        for d in DURATIONS:
+        for d in DURATIONS + (LONG if dataset == "own" else []):
             testable = set(falls.loc[after >= 1 + d, "seq"])
             for a, (oof, vf) in preds.items():
                 for variant in (["strict", "lenient"] if d else ["raw"]):

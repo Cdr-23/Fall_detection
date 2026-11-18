@@ -92,6 +92,8 @@ L'alerte se déclenche sur `chute`. `allongé` sert au temps passé au sol.
 
 **Vidéos de l'équipe (proposition de format) :** fichiers `data/own/fall-01.mp4`, `adl-01.mp4`, ... en ~30 fps, personne entière dans le cadre, caméra fixe, au moins une chute jouée sur tapis et des activités normales (s'asseoir, se pencher, s'allonger volontairement). Un fichier `data/own/labels.csv` avec les colonnes `file, classes`, où `classes` suit le style de GMDCSA-24 : `Falling[3.4 to 4.4]; Lying[4.4 to 10]`. Sans labels, on peut quand même regarder la sortie des algos, mais pas calculer de métriques. Ces vidéos ne servent qu'à tester.
 
+**Pour tester la confirmation longue (10-30 s au sol), recommandée pour le produit :** après chaque chute, rester **au moins 30 s au sol** sans se relever, et filmer les activités normales **en continu pendant plusieurs minutes** (se pencher pour ramasser un objet, s'asseoir vite, s'allonger sur un lit ou un canapé). Les vidéos publiques s'arrêtent 2 à 4 s après la chute : seules nos vidéos peuvent valider ce réglage. Ensuite : `python src/external.py own` puis `python src/confirm_long.py`.
+
 ## 6. Pipeline commun (déjà fixé)
 
 1. **Pose :** YOLOv8n-pose (déjà entraîné, utilisé tel quel) → 17 points par frame, mis en cache dans `poses/`.
