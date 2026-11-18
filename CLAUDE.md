@@ -3,6 +3,95 @@
 > Brouillon de travail. Rendu : vendredi 20 novembre 2026.
 > Langue de travail : français. Code, commentaires et README : anglais.
 
+## 0. À LIRE EN PREMIER : état du projet et ce qu'il reste à faire (mis à jour le 18/11)
+
+**Claude : si quelqu'un de l'équipe te demande « qu'est-ce que je dois faire ? », réponds à partir de cette section.** Les sections 1 à 12 plus bas sont le plan d'origine : utiles pour le contexte, mais les sections 7.1 à 7.5 (P1 à P5) sont **terminées**. Les résultats détaillés et leur lecture sont dans `results/p5_notes.md` (à lire pour tout ce qui touche aux chiffres).
+
+### 0.1 Ce qui est fait (tout est sur `main`)
+
+- **Pipeline commun (P1) :** vidéo → squelette YOLOv8n-pose → fenêtres de 30 images (1 s) → 26 features + squelette brut. 3 classes : `pas chute` / `chute` / `allongé`. Validation croisée 5 folds par séquence sur URFD (70 vidéos).
+- **6 modèles (P2-P4) :** naïf, règles à seuils, régression logistique, arbre, **gradient boosting**, réseau de neurones.
+- **Comparaison (P5) :** `results/comparison.md`, `results/p5_notes.md`, figures dans `results/`.
+- **Tests externes, jamais utilisés pour entraîner :** GMDCSA-24 (3 maisons) et Le2i (2 maisons).
+- **Modèle d'impact :** `config/impact.yaml` (chaque paramètre sourcé ou marqué « hypothèse ») → `python src/impact.py` → `results/impact.md`, `impact_break_even.png`, `impact_tornado.png`.
+
+### 0.2 Modèle retenu et chiffres clés (à reprendre tels quels dans les slides)
+
+**Gradient boosting + confirmation : l'alerte ne part que si la personne est ensuite vue allongée (~0,5 s).** Choisi sur la validation croisée d'URFD (la bonne méthode : on ne choisit jamais un modèle sur un jeu de test).
+
+| Boosting, sans → avec confirmation | URFD (validation croisée) | GMDCSA-24 (externe) | Le2i (externe) |
+|---|---|---|---|
+| Chutes détectées | 29/30 → 27/30 | 53/78 → 52/77 | 17/37 → 22/37 |
+| Fausses alertes (vidéos d'activités normales) | 15 → 7 | 33 → 9 | 7 → 2 |
+| Délai moyen de l'alerte | 0,4 s → 1,4 s | 0,3 s → 1,4 s | 0,2 s → 0,9 s |
+
+Benchmarks : le modèle naïf détecte 0/30 chutes ; les règles à seuils (≈ « business rule ») 28/30 mais 30 fausses alertes et aucun classement (PR-AUC 0,12 contre 0,67 pour le boosting). Tous les modèles tournent en temps réel (~1 ms par fenêtre au plus).
+
+**Les 6 messages à faire passer :**
+1. **Le problème :** chez les plus de 90 ans, 60 % chutent dans l'année et 30 % des chuteurs restent ≥ 1 h au sol ; le médaillon d'alarme n'est pas utilisé dans la plupart de ces cas (Fleming & Brayne, BMJ 2008, https://doi.org/10.1136/bmj.a2227). 174 824 hospitalisations et 20 148 décès liés à une chute chez les 65+ en France en 2024 (Santé publique France, bulletin du 12/03/2026).
+2. **La solution :** une caméra qui ne garde que le squelette (vie privée), un modèle simple et rapide, et une alerte en deux temps (détection puis confirmation au sol).
+3. **Ça marche, avec des limites honnêtes :** 27/30 chutes sur URFD ; la performance baisse dans d'autres maisons (52/77 et 22/37), surtout avec une caméra placée haut.
+4. **Principale erreur :** se pencher vite pour ramasser un objet ressemble à une chute sur 1 s de squelette (`results/errors/*.png`).
+5. **Est-ce que ça compte (impact) :** pour 1 000 abonnés, ~58 longs séjours au sol évités par an (~138 k€). Mais **tout dépend du taux de fausses alertes en vie réelle** : rentable seulement sous ~0,02 fausse alerte par personne et par jour (`results/impact_break_even.png`). D'où la recommandation : confirmation longue (10-30 s au sol) puis appel de vérification avant toute sortie.
+6. **Recommandation :** un pilote chez un opérateur de téléassistance, pour mesurer le vrai taux de fausses alertes. C'est la donnée qui manque.
+
+**Ce qu'on ne doit PAS dire :** un taux de fausses alertes par heure en vie réelle (nos vidéos d'activités ne font que quelques minutes) ; que ça marche partout (3 datasets, peu de personnes) ; que les euros de l'impact sont certains (plusieurs paramètres sont des hypothèses, marqués comme tels).
+
+### 0.3 Qui fait quoi d'ici vendredi 20/11
+
+| Qui | Tâche |
+|---|---|
+| Aristote | README d'une page (anglais), modèle d'impact (v1 faite), relecture des chiffres |
+| **Alain et Jules** | **Vidéos de test (0.4), slides (0.5), vidéo de 2 min (0.6)** |
+
+### 0.4 Alain et Jules : tourner et traiter les vidéos de test (« test ultime »)
+
+**But :** voir ce que sort chaque modèle sur nos propres vidéos (seul test vraiment à l'aveugle), et mesurer la confirmation longue (10-30 s au sol), impossible avec les datasets publics.
+
+**Tournage :**
+- Caméra fixe (téléphone sur un support), **à l'horizontale**, à ~1-1,5 m de haut, de côté ou en diagonale, **corps entier dans le cadre**, pièce bien éclairée. (URFD, sur lequel le modèle a appris, est filmé ainsi. 1 ou 2 clips avec la caméra en hauteur montreront la limite.)
+- **Chutes** (sur un matelas, en sécurité) : 5 à 10 clips, en avant, en arrière, sur le côté, depuis une chaise. **Rester au sol au moins 30 s** après chaque chute, sans se relever.
+- **Activités normales** : 5 à 10 clips d'**au moins 1-2 min en continu** : marcher, **se pencher pour ramasser un objet** (plusieurs fois), s'asseoir vite, s'allonger sur un lit ou un canapé.
+- Noms de fichiers **obligatoires** : `fall-01.mp4`, `fall-02.mp4`, ..., `adl-01.mp4`, ... (le mot `fall` ou `adl` dit au code si c'est une chute).
+- Mettre les vidéos dans `data/own/`. **Elles ne vont pas sur GitHub** (`data/` est ignoré : visages de l'équipe).
+
+**Étiquettes :** un fichier `data/own/labels.csv` avec les colonnes `file,classes`, temps en secondes depuis le début du clip, par exemple :
+```
+file,classes
+fall-01.mp4,"Walking[0 to 4.2]; Falling[4.2 to 40]"
+adl-01.mp4,"Walking[0 to 20]; Bending[20 to 23]; Walking[23 to 60]; Lying[60 to 90]"
+```
+Règle du code : un intervalle `Falling[a to b]` = `chute` pendant 1 s à partir de `a`, puis `allongé` jusqu'à `b` ; `Lying`/`Sleeping` = `allongé` ; tout le reste (`Walking`, `Bending`, `Sitting`...) = `pas chute`.
+
+**Commandes** (environnement activé, voir section 3) :
+```bash
+python src/external.py own          # squelettes + fenêtres -> poses/own, processed/own
+python src/confirm_long.py          # confirmation 0,5 à 30 s au sol -> results/confirm_long.csv (lignes dataset = own)
+python src/demo.py data/own/fall-01.mp4 --labels "Walking[0 to 4.2]; Falling[4.2 to 40]"   # classe prédite au fil du temps, chaque modèle
+```
+`demo.py` écrit `results/demo/<nom>.csv` et `.png` (frise : vérité vs prédiction de chaque modèle). `results/demo/` est ignoré par git : **copier dans `results/own/` les 2-3 frises utiles aux slides** et les commiter.
+
+**Règles :** ne rien régler (seuil, modèle) sur ces vidéos, sinon ce n'est plus un test ; ne pas relancer `src/extract_pose.py` sur URFD ; commiter `poses/own`, `processed/own`, `results/own/`, `results/confirm_long.csv`, sur une branche `p6-videos-slides`, sans mention de Claude dans les commits.
+
+### 0.5 Alain et Jules : les slides (5 à 10, adressées à la BSPP ou à un opérateur de téléassistance)
+
+La consigne du cours (document « Team project description », 15.071) : problème, solution IA, impact, recommandations ; s'adresser au décideur, pas à un data scientist ; « un modèle simple qui règle un vrai problème vaut mieux qu'un système complexe ». Proposition :
+
+| # | Slide | Contenu et source |
+|---|---|---|
+| 1 | Le problème | chiffres SpF 2024, long séjour au sol et médaillon non utilisé (Fleming & Brayne) (message 1) |
+| 2 | La solution | caméra → squelette (vie privée) → modèle → alerte en 2 temps (schéma) |
+| 3 | Les données | URFD (entraînement, 70 vidéos), GMDCSA-24 et Le2i (tests externes), nos vidéos (test final) |
+| 4 | Les modèles comparés | 6 modèles, du naïf au réseau ; boosting retenu ; `results/pr_curves.png` |
+| 5 | Est-ce que ça marche | tableau 0.2 ; une image d'erreur (`results/errors/boosting_adl-05.png`) |
+| 6 | Test sur nos vidéos | 1-2 frises `results/own/*.png` (0.4) |
+| 7 | Est-ce que ça compte | `results/impact_break_even.png` + chiffres 0.2 (message 5) |
+| 8 | Recommandation et limites | pilote, confirmation longue + appel ; ce qu'on ne peut pas affirmer |
+
+### 0.6 Vidéo de 2 minutes (pitch au décideur)
+
+~20 s le problème (une chute, personne pour aider) → ~30 s la solution (squelette, alerte en 2 temps) → ~40 s démo sur une de nos vidéos (frise `demo.py`) → ~20 s les chiffres (27/30 chutes, limites) → ~10 s la recommandation (pilote).
+
 ## 1. Contexte du projet
 
 - **Problème :** les relevages de personnes âgées qui ont chuté représentent ~20 % des interventions SSUAP à la BSPP (11e compagnie). La téléassistance actuelle (bouton, médaillon) génère trop de déclenchements intempestifs, la levée de doute est faible, et on ne connaît ni l'heure de la chute ni le temps passé au sol.
@@ -266,7 +355,7 @@ Lis d'abord 7.0. Entrées : `processed/X_seq.npy` `(N, 30, 17, 2)`, `processed/v
 5. **Généralisation** : appliquer les modèles finaux (`models/*`) à GMDCSA-24 et aux vidéos de l'équipe (`data/own/`) via `src/demo.py`, regarder ce qui sort en classification pour chaque algo, et comparer avec URFD. C'est le test ultime (section 10). Dire clairement que la performance baisse quand on change de pièce, de caméra et de personnes.
 6. Conclusion honnête : le modèle retenu et pourquoi, et ce qu'on ne peut pas affirmer avec 70 séquences et une seule configuration de caméra.
 
-### 7.6 Autres livrables (proposition de répartition, à confirmer)
+### 7.6 Autres livrables (ancienne proposition, remplacée par la section 0.3)
 
 - `src/demo.py` et le test ultime : P1, une fois ses fondations finies.
 - README d'une page, en anglais, pour un data scientist : P2.
@@ -314,7 +403,7 @@ On fait tourner tous les algos sur une vidéo dans un environnement clair, et on
 
 Il faut pour ça un script `src/demo.py` qui prend une vidéo et rend, pour chaque algo, la classe prédite au fil du temps.
 
-## 11. Livrables finaux (à répartir)
+## 11. Livrables finaux (répartition : voir section 0.3)
 
 - README d'une page pour un data scientist, code relançable avec un seul `make`.
 - 5 à 10 slides adressées au décideur (BSPP ou opérateur de téléassistance).
@@ -326,5 +415,5 @@ Il faut pour ça un script `src/demo.py` qui prend une vidéo et rend, pour chaq
 - Règle du label d'une fenêtre : proposée en 7.0 (classe de la dernière frame). P1 peut la changer en prévenant l'équipe.
 - Les frames « allongé » des ADL (lit, canapé) comptent comme `allongé` : à confirmer, car ce n'est pas une conséquence de chute.
 - CAUCAFall : on ne le télécharge pas (8,3 Go) sauf accord de l'équipe.
-- Répartition de 7.6 (démo, README, impact, vidéo, slides) à confirmer.
+- Répartition : décidée en section 0.3.
 - MP4 (320×240) ou PNG (640×480) : le test montre un gain faible, on reste sur MP4 sauf mauvaise surprise.

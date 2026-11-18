@@ -129,6 +129,25 @@ the extended delay.)
   being too cautious in a new room. Logistic regression keeps most falls (31 / 37).
 - With 1 s on the floor, logistic regression gives **32 / 35 falls and 2 false alerts**.
 
+## 4 ter. Impact (`src/impact.py`, `config/impact.yaml`, `results/impact.md`)
+
+For 1,000 people living alone with telecare, over one year (base values; each parameter sourced
+or marked as a hypothesis in `config/impact.yaml`):
+- ~180 long lies (≥ 1 h on the floor; Fleming & Brayne, BMJ 2008), of which the camera would
+  cut short ~58 (one camera per home, detection 0.675 measured on GMDCSA-24, pendant alarms
+  already used in a minority of cases).
+- Value: ~138 k EUR (11,796 EUR extra cost in the year after a hospitalized fall, Santé publique
+  France 2023, × a hypothetical 20 % avoided by a fast alert).
+- **Everything depends on the real-life false-alert rate.** Each false alert costs ~10 EUR (a
+  check call + 5 % of dispatches at 141.80 EUR, SDIS 81). The system breaks even below **~0.02
+  false alerts per person per day** (one every ~7 weeks); at 0.2 / day it loses ~660 EUR per
+  person per year (`impact_break_even.png`, `impact_tornado.png`).
+- Cost ratio R (missed fall vs false alert) ≈ 70: a missed fall is much more costly, which
+  supports a low alert threshold **followed by a confirmation step**, not a high threshold.
+- Reading: the model is useful only inside a two-step process (confirmation on the floor for
+  10-30 s, then a check call before any dispatch). Measuring the daily-life false-alert rate on
+  long team videos is the next step that decides whether it pays off.
+
 ## 5. Conclusion
 
 **Retained model: gradient boosting (balanced) + alert confirmation by lying.** It has the best
@@ -163,9 +182,10 @@ What we **cannot** claim:
 - Robustness across homes: one camera set-up for training, 70 sequences, and a clear drop on the
   two external datasets. On Le2i (camera placed high), the boosting misses more than half of the
   falls (17 / 37, section 4 bis): training on more camera set-ups is the first improvement to make.
-- The cost ratio R: it is a hypothesis until `config/impact.yaml` gives sourced values.
+- The money: the impact model (section 4 ter) rests on hypotheses for the avoidable share of
+  costs and for the daily-life false-alert rate, which decides whether the system pays off.
 
 **Still to do:** the ultimate test on the team's own videos (`data/own/` is empty: put the
 videos and `labels.csv` there, then `python src/external.py own`, `python src/confirm_long.py`
-and `python src/demo.py <video>`; stay on the floor >= 30 s after each fall),
-`config/impact.yaml`, slides.
+and `python src/demo.py <video>`; stay on the floor >= 30 s after each fall), README, slides,
+2-minute video.
