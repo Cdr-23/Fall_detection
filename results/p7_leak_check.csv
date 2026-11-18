@@ -1,0 +1,9 @@
+algo,alert,start < frame 30,frame 30-90,start > frame 90
+boosting,raw,16,12,1
+boosting,confirmed,15,11,1
+boosting_floor,raw,16,12,1
+boosting_floor,confirmed,14,9,1
+boosting_lookback,raw,16,10,1
+boosting_lookback,confirmed,14,9,1
+boosting_ctx,raw,16,10,1
+boosting_ctx,confirmed,14,9,1

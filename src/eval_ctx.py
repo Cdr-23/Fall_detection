@@ -1,0 +1,220 @@
+"""P7 evaluation: the retained boosting vs the three context variants (src/run_boosting_ctx.py).
+
+Reads the existing results of the retained model (results/boosting_oof.parquet, models/
+boosting.joblib) WITHOUT modifying them; every metric comes from src/metrics.py and src/confirm.py.
+Each model is scored without confirmation (alert p1 >= 0.5) and with confirmation
+(confirm.confirm_alerts, default parameters; event tolerance extended by HORIZON as in
+confirm.confirmed_events).
+
+1. URFD, out-of-fold (5 folds by sequence): PR-AUC fall (fold mean +/- std), falls detected / 30,
+   mean delay, false alerts in ADL (raw count) and ADL sequences with a false alert.
+2. GMDCSA-24 and Le2i: final models trained on all URFD, never tuned on these sets.
+3. Which URFD ADL sequences with a confirmed alert (boosting) disappear with each variant, and
+   which falls are lost or gained.
+4. Leak check: 16 of the 30 URFD falls start before frame 30, so their look-back is empty (NaN).
+   Recall for falls starting after frame 90 vs before frame 30; share of |SHAP| (class fall) per
+   feature group on the fall windows of early vs late falls (boosting_ctx final model); alerted
+   ADL windows with vs without a lag history.
+
+Outputs: results/p7_comparison.md, results/p7_comparison.csv. Usage: python src/eval_ctx.py
+"""
+import numpy as np
+import pandas as pd
+
+import features_ctx as fc
+import run_boosting
+import run_boosting_ctx
+from common import oof_frame
+from confirm import confirmed_events
+from features import FEATURES
+from metrics import ROOT, evaluate_by_fold, event_metrics, wilson, window_metrics
+
+RESULTS, PROCESSED = ROOT / "results", ROOT / "processed"
+ALGOS = ["boosting", "boosting_floor", "boosting_lookback", "boosting_ctx"]
+SETS = {"gmdcsa24": "GMDCSA-24", "le2i": "Le2i"}
+TAU = 0.5
+GROUPS = {"base (26)": FEATURES, "FLOOR (6)": fc.FLOOR, "3 s look-back (6)": fc.LOOK_3S,
+          "previous windows _lag (8)": fc.LOOK_LAG}
+
+
+def ci(k, n):
+    lo, hi = wilson(int(k), int(n))
+    return f"{max(lo, 0):.0%}-{hi:.0%}"
+
+
+def predict(algo, feats, X):
+    if algo == "boosting":
+        return run_boosting.predict_proba(feats, X)
+    return run_boosting_ctx.predict_proba(feats, X, algo=algo)
+
+
+def per_seq(oof, seqs, confirmed):
+    """Per sequence: fall detected (fall-*) / has a false alert (adl-*)."""
+    kind = dict(zip(seqs["seq"], seqs["kind"]))
+    det, fa = {}, {}
+    for s, g in oof.groupby("seq"):
+        e = confirmed_events(g, seqs) if confirmed else event_metrics(g, seqs, tau=TAU)
+        if kind[s] == "fall" and e["n_falls"]:
+            det[s] = bool(e["n_detected"])
+        if kind[s] == "adl":
+            fa[s] = e["false_alerts_adl"]
+    return det, fa
+
+
+def score(oof, seqs, by_fold=False):
+    rows = {}
+    pr = (evaluate_by_fold(oof, seqs).loc["pr_auc_fall", ["fold_mean", "fold_std"]].to_list()
+          if by_fold else [window_metrics(oof)["pr_auc_fall"], np.nan])
+    for alert in ("raw", "confirmed"):
+        e = confirmed_events(oof, seqs) if alert == "confirmed" else event_metrics(oof, seqs, tau=TAU)
+        rows[alert] = {"pr_auc_fall": pr[0], "pr_auc_fall_std": pr[1],
+                       "falls_detected": e["n_detected"], "n_falls": e["n_falls"],
+                       "delay_mean_s": e["delay_mean_s"], "false_alerts_adl": e["false_alerts_adl"],
+                       "adl_seqs_with_false_alert": e["adl_seqs_with_false_alert"],
+                       "n_adl": int((seqs["kind"] == "adl").sum())}
+    return rows
+
+
+def external_oof(algo, name):
+    p = PROCESSED / name
+    meta, feats, X = run_boosting_ctx.load_ctx(p)
+    return oof_frame(meta, predict(algo, feats, np.asarray(X)))
+
+
+def main():
+    seqs = {"urfd": pd.read_csv(PROCESSED / "sequences.csv")}
+    seqs.update({n: pd.read_csv(PROCESSED / n / "sequences.csv") for n in SETS})
+    oofs = {("urfd", a): pd.read_parquet(RESULTS / f"{a}_oof.parquet") for a in ALGOS}
+    for n in SETS:
+        for a in ALGOS:
+            oofs[(n, a)] = external_oof(a, n)
+
+    # sanity: the retained boosting reproduces the official external numbers (tau 0.5)
+    for n in SETS:
+        off = pd.read_csv(RESULTS / f"external_{n}.csv")
+        off = off[(off["algo"] == "boosting") & (off["tau"].astype(str) == "0.5")].iloc[0]
+        e = event_metrics(oofs[(n, "boosting")], seqs[n], tau=TAU)
+        assert (e["n_detected"], e["false_alerts_adl"]) == (off["falls_detected"], off["false_alerts_adl"]), n
+
+    rows = []
+    for (n, a), oof in oofs.items():
+        for alert, r in score(oof, seqs[n], by_fold=(n == "urfd")).items():
+            rows.append({"dataset": n, "algo": a, "alert": alert, **r})
+    table = pd.DataFrame(rows)
+    table.to_csv(RESULTS / "p7_comparison.csv", index=False)
+
+    def cell(n, a, alert):
+        r = table[(table.dataset == n) & (table.algo == a) & (table.alert == alert)].iloc[0]
+        return r
+
+    md = ["# P7: context features vs the retained boosting (generated by src/eval_ctx.py)", "",
+          "Alert p1 >= 0.5; confirmed = `confirm.confirm_alerts` defaults (3 lying windows within "
+          "3 s). URFD = out-of-fold (5 folds by sequence); GMDCSA-24 and Le2i = final models "
+          "trained on all URFD, never tuned on them. FA = false alerts in ADL clips (raw count), "
+          "with the number of ADL clips concerned in brackets.", "",
+          "## 1. URFD, cross-validation", "",
+          "| Model | Alert | PR-AUC fall (fold mean ± std) | Falls detected / 30 (95 % interval) | "
+          "Mean delay (s) | FA (ADL seqs / 40) |", "|---|---|---|---|---|---|"]
+    for a in ALGOS:
+        for alert in ("raw", "confirmed"):
+            r = cell("urfd", a, alert)
+            md.append(f"| {a} | {alert} | {r.pr_auc_fall:.2f} ± {r.pr_auc_fall_std:.2f} | "
+                      f"{r.falls_detected} ({ci(r.falls_detected, r.n_falls)}) | "
+                      f"{r.delay_mean_s:.2f} | {r.false_alerts_adl} ({r.adl_seqs_with_false_alert}) |")
+    md += ["", "## 2. External tests (never tuned on them)", "",
+           "| Model | Alert | GMDCSA-24 PR-AUC | GMDCSA-24 falls / 78 | GMDCSA-24 FA (clips / 81) | "
+           "Le2i PR-AUC | Le2i falls / 37 | Le2i FA (clips / 23) |", "|---|---|---|---|---|---|---|---|"]
+    for a in ALGOS:
+        for alert in ("raw", "confirmed"):
+            g, l = cell("gmdcsa24", a, alert), cell("le2i", a, alert)
+            md.append(f"| {a} | {alert} | {g.pr_auc_fall:.2f} | {g.falls_detected} "
+                      f"({ci(g.falls_detected, g.n_falls)}) | {g.false_alerts_adl} "
+                      f"({g.adl_seqs_with_false_alert}) | {l.pr_auc_fall:.2f} | {l.falls_detected} "
+                      f"({ci(l.falls_detected, l.n_falls)}) | {l.false_alerts_adl} "
+                      f"({l.adl_seqs_with_false_alert}) |")
+
+    # 3. which errors change (per sequence)
+    md += ["", "## 3. Which errors change", ""]
+    for n in ["urfd"] + list(SETS):
+        ref = {c: per_seq(oofs[(n, "boosting")], seqs[n], c == "confirmed") for c in ("raw", "confirmed")}
+        md += [f"### {'URFD (out-of-fold)' if n == 'urfd' else SETS[n]}", ""]
+        for c in ("confirmed", "raw"):
+            fa_ref = sorted(s for s, v in ref[c][1].items() if v)
+            miss_ref = sorted(s for s, v in ref[c][0].items() if not v)
+            md.append(f"**{c}, boosting:** ADL clips with a false alert ({len(fa_ref)}): "
+                      + (", ".join(fa_ref) if n == "urfd" or len(fa_ref) <= 12 else "see csv")
+                      + f"; missed falls ({len(miss_ref)})"
+                      + (": " + ", ".join(miss_ref) if n == "urfd" or len(miss_ref) <= 12 else "") + ".")
+            md.append("")
+            md += ["| Variant | ADL clips with FA removed | ADL clips with FA added | "
+                   "falls lost | falls gained |", "|---|---|---|---|---|"]
+            for a in ALGOS[1:]:
+                det, fa = per_seq(oofs[(n, a)], seqs[n], c == "confirmed")
+                removed = sorted(s for s in fa_ref if not fa.get(s))
+                added = sorted(s for s, v in fa.items() if v and not ref[c][1].get(s))
+                lost = sorted(s for s, v in det.items() if not v and ref[c][0].get(s))
+                gained = sorted(s for s, v in det.items() if v and not ref[c][0].get(s))
+                fmt = (lambda x: ", ".join(x) or "—") if n == "urfd" else (lambda x: str(len(x)))
+                md.append(f"| {a} | {fmt(removed)} | {fmt(added)} | {fmt(lost)} | {fmt(gained)} |")
+            md.append("")
+
+    # 4. leak check
+    s = seqs["urfd"].dropna(subset=["fall_start"]).copy()
+    s["fall_start"] = s["fall_start"].astype(int)
+    buckets = {"start < frame 30": s[s.fall_start < 30].seq, "frame 30-90": s[(s.fall_start >= 30) & (s.fall_start <= 90)].seq,
+               "start > frame 90": s[s.fall_start > 90].seq}
+    md += ["## 4. Leak check: empty look-back at the start of URFD sequences", "",
+           "16 of the 30 URFD falls start before frame 30 (their `_lag` features are NaN), only 2 "
+           "after frame 90. All 37 Le2i falls start after frame 90 (full history).", "",
+           "| Model | Alert | " + " | ".join(f"{k} (n = {len(v)})" for k, v in buckets.items())
+           + " | Le2i (all > frame 90) |", "|---|---|" + "---|" * (len(buckets) + 1)]
+    leak_rows = []
+    for a in ALGOS:
+        for c in ("raw", "confirmed"):
+            det, _ = per_seq(oofs[("urfd", a)], seqs["urfd"], c == "confirmed")
+            cells = [f"{sum(det[x] for x in v)} / {len(v)}" for v in buckets.values()]
+            l = cell("le2i", a, c)
+            md.append(f"| {a} | {c} | " + " | ".join(cells) + f" | {l.falls_detected} / {l.n_falls} |")
+            leak_rows.append({"algo": a, "alert": c, **{k: sum(det[x] for x in v) for k, v in buckets.items()}})
+
+    meta, feats, _ = run_boosting_ctx.load_ctx()
+    adl = meta["kind"].eq("adl").to_numpy()
+    nolag = feats["torso_angle_mean_lag1s"].isna().to_numpy() & (meta["end_frame"] < 60).to_numpy()
+    md += ["", "Alerted ADL windows (p1 >= 0.5, out-of-fold) whose window ends before frame 60 "
+           "(no `_lag1s` history) vs later:", "",
+           f"| Model | ADL windows ending < frame 60 (n = {(adl & nolag).sum()}) | "
+           f"ADL windows ending >= frame 60 (n = {(adl & (meta['end_frame'] >= 60).to_numpy()).sum()}) |",
+           "|---|---|---|"]
+    for a in ALGOS:
+        o = oofs[("urfd", a)].set_index("window_id").loc[meta["window_id"]]
+        al = o["p1"].to_numpy() >= TAU
+        early = adl & (meta["end_frame"] < 60).to_numpy()
+        late = adl & (meta["end_frame"] >= 60).to_numpy()
+        md.append(f"| {a} | {al[early].sum()} ({al[early].mean():.1%}) | {al[late].sum()} ({al[late].mean():.1%}) |")
+
+    model = run_boosting_ctx._models.get("boosting_ctx") or __import__("joblib").load(
+        ROOT / "models" / "boosting_ctx.joblib")
+    sv, _ = run_boosting.shap_values(model, feats, fc.FEATURES_CTX)
+    absf = pd.DataFrame(np.abs(sv[:, :, 1]), columns=fc.FEATURES_CTX)
+    fallw = (meta["y"] == 1).to_numpy()
+    start = meta["seq"].map(dict(zip(s.seq, s.fall_start))).to_numpy()
+    sel = {"fall windows, falls starting < frame 30": fallw & (start < 30),
+           "fall windows, falls starting >= frame 30": fallw & (start >= 30),
+           "all windows": np.ones(len(meta), bool)}
+    md += ["", "Share of mean |SHAP| (class fall, boosting_ctx final model on all URFD: in-sample, "
+           "descriptive) per feature group:", "",
+           "| Windows | n | " + " | ".join(GROUPS) + " | top 5 features |", "|---|---|" + "---|" * (len(GROUPS) + 1)]
+    for name, m in sel.items():
+        mean = absf[m].mean()
+        tot = mean.sum()
+        top = ", ".join(mean.sort_values(ascending=False).index[:5])
+        md.append(f"| {name} | {m.sum()} | " + " | ".join(f"{mean[g].sum() / tot:.0%}" for g in GROUPS.values())
+                  + f" | {top} |")
+    text = "\n".join(md) + "\n"
+    (RESULTS / "p7_comparison.md").write_text(text)
+    pd.DataFrame(leak_rows).to_csv(RESULTS / "p7_leak_check.csv", index=False)
+    print(text)
+
+
+if __name__ == "__main__":
+    main()
