@@ -32,7 +32,7 @@ Benchmarks : le modèle naïf détecte 0/30 chutes ; les règles à seuils (≈ 
 2. **La solution :** une caméra qui ne garde que le squelette (vie privée), un modèle simple et rapide, et une alerte en deux temps (détection puis confirmation au sol).
 3. **Ça marche, avec des limites honnêtes :** 27/30 chutes sur URFD ; la performance baisse dans d'autres maisons (52/77 et 22/37), surtout avec une caméra placée haut.
 4. **Principale erreur :** se pencher vite pour ramasser un objet ressemble à une chute sur 1 s de squelette (`results/errors/*.png`).
-5. **Est-ce que ça compte (impact) :** pour 1 000 abonnés, ~58 longs séjours au sol évités par an (~138 k€). Mais **tout dépend du taux de fausses alertes en vie réelle** : rentable seulement sous ~0,02 fausse alerte par personne et par jour (`results/impact_break_even.png`). D'où la recommandation : confirmation longue (10-30 s au sol) puis appel de vérification avant toute sortie.
+5. **Est-ce que ça compte (impact) :** pour 1 000 abonnés, ~58 longs séjours au sol (≥ 1 h) évités par an : c'est le bénéfice santé. En euros, **tout dépend du taux de fausses alertes en vie réelle**, qu'on ne peut pas mesurer : +291 € par personne et par an dans le scénario optimiste (1 fausse alerte tous les 100 jours), −107 € au centre (1 tous les 20 jours), −1 802 € au pessimiste (1 tous les 5 jours). **Rentable sous ~1 fausse alerte par personne tous les 47 jours** (`results/impact.md`, `results/impact_break_even.png`). Les euros sont un minimum : décès, entrées en EHPAD et qualité de vie ne sont pas comptés. D'où la recommandation : confirmation longue (10-30 s au sol), appel de vérification avant toute sortie, et un pilote pour mesurer le vrai taux de fausses alertes (critère clair de go / no-go).
 6. **Recommandation :** un pilote chez un opérateur de téléassistance, pour mesurer le vrai taux de fausses alertes. C'est la donnée qui manque.
 
 **Ce qu'on ne doit PAS dire :** un taux de fausses alertes par heure en vie réelle (nos vidéos d'activités ne font que quelques minutes) ; que ça marche partout (3 datasets, peu de personnes) ; que les euros de l'impact sont certains (plusieurs paramètres sont des hypothèses, marqués comme tels).
@@ -85,7 +85,7 @@ La consigne du cours (document « Team project description », 15.071) : problè
 | 4 | Les modèles comparés | 6 modèles, du naïf au réseau ; boosting retenu ; `results/pr_curves.png` |
 | 5 | Est-ce que ça marche | tableau 0.2 ; une image d'erreur (`results/errors/boosting_adl-05.png`) |
 | 6 | Test sur nos vidéos | 1-2 frises `results/own/*.png` (0.4) |
-| 7 | Est-ce que ça compte | `results/impact_break_even.png` + chiffres 0.2 (message 5) |
+| 7 | Est-ce que ça compte | ~58 longs séjours au sol évités ; tableau des 3 scénarios (`results/impact.md`) ; `results/impact_break_even.png` (message 5) |
 | 8 | Recommandation et limites | pilote, confirmation longue + appel ; ce qu'on ne peut pas affirmer |
 
 ### 0.6 Vidéo de 2 minutes (pitch au décideur)

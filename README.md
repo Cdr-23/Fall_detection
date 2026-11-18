@@ -55,11 +55,21 @@ confirmation):
 
 Performance drops when the room, the camera and the people change: this is the main limit.
 
-**Impact** (`config/impact.yaml` → `results/impact.md`; every number has a source or is marked
-as a hypothesis). For 1,000 people monitored for a year, about 58 long stays on the floor (≥ 1 h)
-would be avoided, worth about 138,000 EUR. But it only pays off if false alerts stay rare in daily
-life: **below about 1 false alert per person every 7 weeks**. That rate cannot be measured on
-public videos, so a pilot with a telecare operator is the next step.
+**Impact** (`config/impact.yaml` → [`results/impact.md`](results/impact.md); every number has
+a source or is marked as a hypothesis). For 1,000 people monitored for a year, about **58 long
+stays on the floor (≥ 1 h) avoided** (51 to 78 depending on the scenario). In euros, the result
+depends on one unknown, the real-life false-alert rate (each false alert costs ~10 EUR: a check
+call, sometimes a dispatch):
+
+| Scenario | False alerts per person | Net value per person per year |
+|---|---|---|
+| Optimistic | one every 100 days | +291 EUR |
+| Central | one every 20 days | −107 EUR |
+| Pessimistic | one every 5 days | −1,802 EUR |
+
+**It pays off if false alerts stay below about one per person every 47 days.** The euros only
+count part of the hospital cost (not deaths, care-home moves or quality of life), so they are a
+lower bound. Next step: a pilot with a telecare operator to measure the real false-alert rate.
 
 **Limits.** 70 training videos, all filmed by the same camera; performance drops in other homes;
 the daily-life videos only last a few minutes in total; the main error is bending down quickly,

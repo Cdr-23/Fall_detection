@@ -131,22 +131,32 @@ the extended delay.)
 
 ## 4 ter. Impact (`src/impact.py`, `config/impact.yaml`, `results/impact.md`)
 
-For 1,000 people living alone with telecare, over one year (base values; each parameter sourced
-or marked as a hypothesis in `config/impact.yaml`):
+For 1,000 people living alone with telecare, over one year (each parameter sourced or marked as
+a hypothesis in `config/impact.yaml`; full output in `results/impact.md`):
 - ~180 long lies (≥ 1 h on the floor; Fleming & Brayne, BMJ 2008), of which the camera would
-  cut short ~58 (one camera per home, detection 0.675 measured on GMDCSA-24, pendant alarms
-  already used in a minority of cases).
-- Value: ~138 k EUR (11,796 EUR extra cost in the year after a hospitalized fall, Santé publique
-  France 2023, × a hypothetical 20 % avoided by a fast alert).
-- **Everything depends on the real-life false-alert rate.** Each false alert costs ~10 EUR (a
-  check call + 5 % of dispatches at 141.80 EUR, SDIS 81). The system breaks even below **~0.02
-  false alerts per person per day** (one every ~7 weeks); at 0.2 / day it loses ~660 EUR per
-  person per year (`impact_break_even.png`, `impact_tornado.png`).
+  cut short **~58** (51 to 78 across scenarios): the health benefit, not converted to euros.
+- Value counted in euros: 11,796 EUR extra cost in the year after a hospitalized fall (Santé
+  publique France 2023) × a hypothetical 20 % avoided by a fast alert → ~138 k EUR. Deaths
+  (risk × 2.14 after a hospitalized fall), care-home moves and quality of life are not counted:
+  the euros are a lower bound.
+- **Everything depends on the real-life false-alert rate**, which public clips cannot measure.
+  Each false alert costs ~10 EUR (a check call + 5 % of dispatches at 141.80 EUR, SDIS 81).
+
+| Scenario | False alerts per person | Avoidable share | Detection | Net value per person per year |
+|---|---|---|---|---|
+| Optimistic | one every 100 days | 40 % | 90 % | +291 EUR |
+| Central | one every 20 days | 20 % | 68 % | −107 EUR |
+| Pessimistic | one every 5 days | 5 % | 59 % | −1,802 EUR |
+
+- Break-even: **one false alert per person every ~47 days** (`impact_break_even.png`); the
+  most influential parameters are the false-alert rate, the dispatch share and the avoidable
+  share of costs, all hypotheses (`impact_tornado.png`).
 - Cost ratio R (missed fall vs false alert) ≈ 70: a missed fall is much more costly, which
   supports a low alert threshold **followed by a confirmation step**, not a high threshold.
-- Reading: the model is useful only inside a two-step process (confirmation on the floor for
-  10-30 s, then a check call before any dispatch). Measuring the daily-life false-alert rate on
-  long team videos is the next step that decides whether it pays off.
+- Reading: the model is worth deploying only inside a two-step process (confirmation on the
+  floor for 10-30 s, then a check call before any dispatch), and only if a pilot confirms that
+  false alerts stay below the break-even rate. This is a clear go / no-go criterion for the
+  decision-maker.
 
 ## 5. Conclusion
 

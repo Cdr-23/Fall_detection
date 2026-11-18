@@ -46,14 +46,16 @@ detection_rate:
     Measured, results/confirm_long.csv: GMDCSA-24 (external) 52/77 = 0.675; low = Le2i 22/37 =
     0.59; high = URFD cross-validation 27/30 = 0.90 (same camera as training, optimistic).
 false_alerts_per_person_day:
-  value: 0.2
-  low: 0.05
-  high: 1.0
+  value: 0.05
+  low: 0.01
+  high: 0.2
   hypothesis: true
   note: >-
     Not measurable with our data: the public ADL clips are a few minutes of dense risky
-    movements (URFD: 7 false alerts in ~4 min, i.e. ~100/h, not a daily-life rate). To be
-    measured on long team videos; the sensitivity analysis shows where it breaks even.
+    movements (URFD: 7 false alerts in ~4 min, i.e. ~100/h, not a daily-life rate). Central
+    value 0.05 = one false alert per person every 20 days; range from one every 100 days (long
+    confirmation working well) to one every 5 days. The decisive unknown: to be measured in a
+    pilot, which is why the results are given as scenarios and a break-even rate.
 
 # --- Costs ------------------------------------------------------------------------------
 cost_hospitalized_fall_eur:
@@ -99,3 +101,29 @@ system_cost_per_person_year_eur:
   high: 120
   hypothesis: true
   note: Camera + edge computing, amortized. For scale, a telecare subscription is ~20 EUR/month (operator offers, 2026).
+
+# --- Scenarios (overrides of the values above; all hypotheses) --------------------------
+scenarios:
+  optimistic:
+    false_alerts_per_person_day: 0.01   # one every 100 days (long confirmation + check call)
+    avoidable_share_of_cost: 0.4
+    dispatch_share_of_false_alerts: 0.01
+    detection_rate: 0.90                # URFD cross-validation (same camera as training)
+  central: {}                           # the values above
+  pessimistic:
+    false_alerts_per_person_day: 0.2    # one every 5 days
+    avoidable_share_of_cost: 0.05
+    dispatch_share_of_false_alerts: 0.15
+    detection_rate: 0.59                # Le2i (camera placed high)
+
+# --- Health context, not converted to euros ------------------------------------------------
+health_context:
+  - >-
+    Long lies (>= 1 h on the floor) are strongly associated with serious injury, hospital
+    admission and moves into long-term care (Fleming & Brayne, BMJ 2008, https://doi.org/10.1136/bmj.a2227).
+  - >-
+    After a hospitalized fall, the adjusted risk of death over 2 years is 2.14 times higher than
+    for matched non-fallers (Mounié et al., JAMDA 2023, Santé publique France).
+  - >-
+    France, people 65+, 2024: 174,824 hospitalizations and 20,148 deaths related to a fall
+    (Santé publique France, national bulletin of 12 March 2026).
