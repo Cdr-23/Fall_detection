@@ -1,0 +1,181 @@
+set,class,feature,windows,nan_share
+urfd,not fall,hip_above_floor_mean,1373,0.06045156591405681
+urfd,not fall,hip_above_floor_min,1373,0.06045156591405681
+urfd,not fall,hip_above_floor_last,1373,0.06045156591405681
+urfd,not fall,head_above_floor_mean,1373,0.05972323379461034
+urfd,not fall,head_above_floor_min,1373,0.05972323379461034
+urfd,not fall,head_above_floor_last,1373,0.05972323379461034
+urfd,not fall,hip_drop_3s,1373,0.005098324836125273
+urfd,not fall,descent_time_3s,1373,0.005098324836125273
+urfd,not fall,hip_vy_max_3s,1373,0.005098324836125273
+urfd,not fall,hip_ay_max_3s,1373,0.0065549890750182084
+urfd,not fall,torso_angle_min_3s,1373,0.005098324836125273
+urfd,not fall,head_height_max_3s,1373,0.005098324836125273
+urfd,not fall,torso_angle_mean_lag1s,1373,0.22432629278951202
+urfd,not fall,head_height_mean_lag1s,1373,0.22432629278951202
+urfd,not fall,bbox_ratio_mean_lag1s,1373,0.2228696285506191
+urfd,not fall,hip_vy_max_lag1s,1373,0.22432629278951202
+urfd,not fall,torso_angle_mean_lag2s,1373,0.415877640203933
+urfd,not fall,head_height_mean_lag2s,1373,0.415877640203933
+urfd,not fall,bbox_ratio_mean_lag2s,1373,0.415877640203933
+urfd,not fall,hip_vy_max_lag2s,1373,0.415877640203933
+urfd,fall,hip_above_floor_mean,151,0.019867549668874173
+urfd,fall,hip_above_floor_min,151,0.019867549668874173
+urfd,fall,hip_above_floor_last,151,0.019867549668874173
+urfd,fall,head_above_floor_mean,151,0.019867549668874173
+urfd,fall,head_above_floor_min,151,0.019867549668874173
+urfd,fall,head_above_floor_last,151,0.019867549668874173
+urfd,fall,hip_drop_3s,151,0.0
+urfd,fall,descent_time_3s,151,0.0
+urfd,fall,hip_vy_max_3s,151,0.0
+urfd,fall,hip_ay_max_3s,151,0.0
+urfd,fall,torso_angle_min_3s,151,0.0
+urfd,fall,head_height_max_3s,151,0.0
+urfd,fall,torso_angle_mean_lag1s,151,0.609271523178808
+urfd,fall,head_height_mean_lag1s,151,0.609271523178808
+urfd,fall,bbox_ratio_mean_lag1s,151,0.609271523178808
+urfd,fall,hip_vy_max_lag1s,151,0.609271523178808
+urfd,fall,torso_angle_mean_lag2s,151,0.8278145695364238
+urfd,fall,head_height_mean_lag2s,151,0.8278145695364238
+urfd,fall,bbox_ratio_mean_lag2s,151,0.8278145695364238
+urfd,fall,hip_vy_max_lag2s,151,0.8278145695364238
+urfd,lying,hip_above_floor_mean,495,0.14545454545454545
+urfd,lying,hip_above_floor_min,495,0.14545454545454545
+urfd,lying,hip_above_floor_last,495,0.14545454545454545
+urfd,lying,head_above_floor_mean,495,0.09494949494949495
+urfd,lying,head_above_floor_min,495,0.09494949494949495
+urfd,lying,head_above_floor_last,495,0.09494949494949495
+urfd,lying,hip_drop_3s,495,0.028282828282828285
+urfd,lying,descent_time_3s,495,0.028282828282828285
+urfd,lying,hip_vy_max_3s,495,0.028282828282828285
+urfd,lying,hip_ay_max_3s,495,0.028282828282828285
+urfd,lying,torso_angle_min_3s,495,0.028282828282828285
+urfd,lying,head_height_max_3s,495,0.028282828282828285
+urfd,lying,torso_angle_mean_lag1s,495,0.13333333333333333
+urfd,lying,head_height_mean_lag1s,495,0.13535353535353536
+urfd,lying,bbox_ratio_mean_lag1s,495,0.09292929292929293
+urfd,lying,hip_vy_max_lag1s,495,0.1292929292929293
+urfd,lying,torso_angle_mean_lag2s,495,0.2383838383838384
+urfd,lying,head_height_mean_lag2s,495,0.2383838383838384
+urfd,lying,bbox_ratio_mean_lag2s,495,0.2101010101010101
+urfd,lying,hip_vy_max_lag2s,495,0.23636363636363636
+gmdcsa24,not fall,hip_above_floor_mean,3948,0.05268490374873354
+gmdcsa24,not fall,hip_above_floor_min,3948,0.05268490374873354
+gmdcsa24,not fall,hip_above_floor_last,3948,0.05268490374873354
+gmdcsa24,not fall,head_above_floor_mean,3948,0.053444782168186426
+gmdcsa24,not fall,head_above_floor_min,3948,0.053444782168186426
+gmdcsa24,not fall,head_above_floor_last,3948,0.053444782168186426
+gmdcsa24,not fall,hip_drop_3s,3948,0.0
+gmdcsa24,not fall,descent_time_3s,3948,0.0
+gmdcsa24,not fall,hip_vy_max_3s,3948,0.0
+gmdcsa24,not fall,hip_ay_max_3s,3948,0.0
+gmdcsa24,not fall,torso_angle_min_3s,3948,0.004305977710233029
+gmdcsa24,not fall,head_height_max_3s,3948,0.004305977710233029
+gmdcsa24,not fall,torso_angle_mean_lag1s,3948,0.17983789260385005
+gmdcsa24,not fall,head_height_mean_lag1s,3948,0.17983789260385005
+gmdcsa24,not fall,bbox_ratio_mean_lag1s,3948,0.1767983789260385
+gmdcsa24,not fall,hip_vy_max_lag1s,3948,0.1778115501519757
+gmdcsa24,not fall,torso_angle_mean_lag2s,3948,0.31458966565349544
+gmdcsa24,not fall,head_height_mean_lag2s,3948,0.31458966565349544
+gmdcsa24,not fall,bbox_ratio_mean_lag2s,3948,0.31357649442755825
+gmdcsa24,not fall,hip_vy_max_lag2s,3948,0.3140830800405269
+gmdcsa24,fall,hip_above_floor_mean,434,0.07142857142857142
+gmdcsa24,fall,hip_above_floor_min,434,0.07142857142857142
+gmdcsa24,fall,hip_above_floor_last,434,0.07142857142857142
+gmdcsa24,fall,head_above_floor_mean,434,0.08294930875576037
+gmdcsa24,fall,head_above_floor_min,434,0.08294930875576037
+gmdcsa24,fall,head_above_floor_last,434,0.08294930875576037
+gmdcsa24,fall,hip_drop_3s,434,0.0
+gmdcsa24,fall,descent_time_3s,434,0.0
+gmdcsa24,fall,hip_vy_max_3s,434,0.0
+gmdcsa24,fall,hip_ay_max_3s,434,0.0
+gmdcsa24,fall,torso_angle_min_3s,434,0.0
+gmdcsa24,fall,head_height_max_3s,434,0.0
+gmdcsa24,fall,torso_angle_mean_lag1s,434,0.2534562211981567
+gmdcsa24,fall,head_height_mean_lag1s,434,0.25806451612903225
+gmdcsa24,fall,bbox_ratio_mean_lag1s,434,0.23271889400921658
+gmdcsa24,fall,hip_vy_max_lag1s,434,0.23271889400921658
+gmdcsa24,fall,torso_angle_mean_lag2s,434,0.5829493087557603
+gmdcsa24,fall,head_height_mean_lag2s,434,0.5829493087557603
+gmdcsa24,fall,bbox_ratio_mean_lag2s,434,0.5691244239631337
+gmdcsa24,fall,hip_vy_max_lag2s,434,0.5691244239631337
+gmdcsa24,lying,hip_above_floor_mean,1664,0.1328125
+gmdcsa24,lying,hip_above_floor_min,1664,0.1328125
+gmdcsa24,lying,hip_above_floor_last,1664,0.1328125
+gmdcsa24,lying,head_above_floor_mean,1664,0.20853365384615385
+gmdcsa24,lying,head_above_floor_min,1664,0.20853365384615385
+gmdcsa24,lying,head_above_floor_last,1664,0.20853365384615385
+gmdcsa24,lying,hip_drop_3s,1664,0.013221153846153846
+gmdcsa24,lying,descent_time_3s,1664,0.013221153846153846
+gmdcsa24,lying,hip_vy_max_3s,1664,0.013221153846153846
+gmdcsa24,lying,hip_ay_max_3s,1664,0.013221153846153846
+gmdcsa24,lying,torso_angle_min_3s,1664,0.019230769230769232
+gmdcsa24,lying,head_height_max_3s,1664,0.039663461538461536
+gmdcsa24,lying,torso_angle_mean_lag1s,1664,0.06971153846153846
+gmdcsa24,lying,head_height_mean_lag1s,1664,0.12259615384615384
+gmdcsa24,lying,bbox_ratio_mean_lag1s,1664,0.05048076923076923
+gmdcsa24,lying,hip_vy_max_lag1s,1664,0.06430288461538461
+gmdcsa24,lying,torso_angle_mean_lag2s,1664,0.16646634615384615
+gmdcsa24,lying,head_height_mean_lag2s,1664,0.1953125
+gmdcsa24,lying,bbox_ratio_mean_lag2s,1664,0.14723557692307693
+gmdcsa24,lying,hip_vy_max_lag2s,1664,0.15745192307692307
+le2i,not fall,hip_above_floor_mean,2426,0.18713932399010716
+le2i,not fall,hip_above_floor_min,2426,0.18713932399010716
+le2i,not fall,hip_above_floor_last,2426,0.18713932399010716
+le2i,not fall,head_above_floor_mean,2426,0.18713932399010716
+le2i,not fall,head_above_floor_min,2426,0.18713932399010716
+le2i,not fall,head_above_floor_last,2426,0.18713932399010716
+le2i,not fall,hip_drop_3s,2426,0.05193734542456719
+le2i,not fall,descent_time_3s,2426,0.05193734542456719
+le2i,not fall,hip_vy_max_3s,2426,0.05276174773289365
+le2i,not fall,hip_ay_max_3s,2426,0.05399835119538335
+le2i,not fall,torso_angle_min_3s,2426,0.05234954657873042
+le2i,not fall,head_height_max_3s,2426,0.05234954657873042
+le2i,not fall,torso_angle_mean_lag1s,2426,0.20362737015663643
+le2i,not fall,head_height_mean_lag1s,2426,0.20362737015663643
+le2i,not fall,bbox_ratio_mean_lag1s,2426,0.20321516900247322
+le2i,not fall,hip_vy_max_lag1s,2426,0.20362737015663643
+le2i,not fall,torso_angle_mean_lag2s,2426,0.3491343775762572
+le2i,not fall,head_height_mean_lag2s,2426,0.3491343775762572
+le2i,not fall,bbox_ratio_mean_lag2s,2426,0.34872217642209397
+le2i,not fall,hip_vy_max_lag2s,2426,0.34954657873042044
+le2i,fall,hip_above_floor_mean,222,0.04504504504504504
+le2i,fall,hip_above_floor_min,222,0.04504504504504504
+le2i,fall,hip_above_floor_last,222,0.04504504504504504
+le2i,fall,head_above_floor_mean,222,0.04504504504504504
+le2i,fall,head_above_floor_min,222,0.04504504504504504
+le2i,fall,head_above_floor_last,222,0.04504504504504504
+le2i,fall,hip_drop_3s,222,0.0
+le2i,fall,descent_time_3s,222,0.0
+le2i,fall,hip_vy_max_3s,222,0.0
+le2i,fall,hip_ay_max_3s,222,0.0
+le2i,fall,torso_angle_min_3s,222,0.0
+le2i,fall,head_height_max_3s,222,0.0
+le2i,fall,torso_angle_mean_lag1s,222,0.0
+le2i,fall,head_height_mean_lag1s,222,0.0
+le2i,fall,bbox_ratio_mean_lag1s,222,0.0
+le2i,fall,hip_vy_max_lag1s,222,0.0
+le2i,fall,torso_angle_mean_lag2s,222,0.0
+le2i,fall,head_height_mean_lag2s,222,0.0
+le2i,fall,bbox_ratio_mean_lag2s,222,0.0
+le2i,fall,hip_vy_max_lag2s,222,0.0
+le2i,lying,hip_above_floor_mean,619,0.20678513731825526
+le2i,lying,hip_above_floor_min,619,0.20678513731825526
+le2i,lying,hip_above_floor_last,619,0.20678513731825526
+le2i,lying,head_above_floor_mean,619,0.24717285945072698
+le2i,lying,head_above_floor_min,619,0.24717285945072698
+le2i,lying,head_above_floor_last,619,0.24717285945072698
+le2i,lying,hip_drop_3s,619,0.022617124394184167
+le2i,lying,descent_time_3s,619,0.022617124394184167
+le2i,lying,hip_vy_max_3s,619,0.029079159935379646
+le2i,lying,hip_ay_max_3s,619,0.029079159935379646
+le2i,lying,torso_angle_min_3s,619,0.022617124394184167
+le2i,lying,head_height_max_3s,619,0.030694668820678513
+le2i,lying,torso_angle_mean_lag1s,619,0.1308562197092084
+le2i,lying,head_height_mean_lag1s,619,0.14378029079159935
+le2i,lying,bbox_ratio_mean_lag1s,619,0.08562197092084006
+le2i,lying,hip_vy_max_lag1s,619,0.12924071082390953
+le2i,lying,torso_angle_mean_lag2s,619,0.05815831987075929
+le2i,lying,head_height_mean_lag2s,619,0.05815831987075929
+le2i,lying,bbox_ratio_mean_lag2s,619,0.029079159935379646
+le2i,lying,hip_vy_max_lag2s,619,0.06462035541195477
