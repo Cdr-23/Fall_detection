@@ -19,6 +19,7 @@ Outputs: poses/<name>/<seq>.parquet (pose columns + y + activity) and processed/
 (windows_meta with fold = -1, features, X_seq, valid, sequences.csv), same format as URFD.
 
 Usage: python src/external.py gmdcsa24     # needs data/raw/gmdcsa24 unzipped (CLAUDE.md, 3)
+       python src/external.py le2i         # Le2i FDD Home_01 + Home_02 in data/raw/le2i (Kaggle)
        python src/external.py own          # data/own/*.mp4 + data/own/labels.csv (file, classes)
 """
 import re
@@ -95,6 +96,30 @@ def gmdcsa_clips(root=RAW / "gmdcsa24"):
     return clips
 
 
+def le2i_clips(root=RAW / "le2i", src_fps=24.0):
+    """Le2i FDD (Home_01, Home_02). Annotation file: line 1 = first frame of the fall, line 2 =
+    last frame (both 0 = no fall, ADL clip), then one line per frame (frame, posture code, box;
+    the posture code is not documented here and is not used). Converted to the interval labels
+    used above, with the same rule as GMDCSA-24: not fall before the fall start, then fall for
+    1 s, then lying until the end of the clip (approximation; event metrics only use the start).
+    Reads the .mp4 made by src/le2i_convert.py (OpenCV crashes on the raw AVIs)."""
+    clips = []
+    for video in sorted(Path(root).glob("Home_0*/Videos/*.avi")):
+        num = int(re.search(r"\((\d+)\)", video.name).group(1))
+        ann = video.parent.parent / "Annotation_files" / f"{video.stem}.txt"
+        lines = ann.read_text().split()
+        start, n = int(lines[0]), len(lines) - 2
+        end_t = n / src_fps
+        home = video.parent.parent.name[-1]
+        if start > 0:
+            t0 = (start - 1) / src_fps                        # frames are 1-based
+            classes, kind = f"Walking[0 to {t0:.3f}]; Falling[{t0:.3f} to {end_t:.3f}]", "fall"
+        else:
+            classes, kind = f"Walking[0 to {end_t:.3f}]", "adl"
+        clips.append((f"le2i-h{home}-{kind}-{num:02d}", video.with_suffix(".mp4"), classes))
+    return clips
+
+
 def own_clips(root=ROOT / "data" / "own"):
     root = Path(root)
     labels = pd.read_csv(root / "labels.csv", skipinitialspace=True)
@@ -130,7 +155,7 @@ def extract(clips, poses_dir):
 
 
 def build(name):
-    clips = gmdcsa_clips() if name == "gmdcsa24" else own_clips()
+    clips = {"gmdcsa24": gmdcsa_clips, "le2i": le2i_clips}.get(name, own_clips)()
     poses_dir, out = ROOT / "poses" / name, ROOT / "processed" / name
     extract(clips, poses_dir)
     meta = preprocess.build(poses_dir=poses_dir, out=out, cv=False)
