@@ -1,0 +1,82 @@
+|--- bbox_ratio_mean <= 1.08
+|   |--- bbox_ratio_std <= 0.34
+|   |   |--- hip_vy_mean <= -0.77
+|   |   |   |--- class: lying
+|   |   |--- hip_vy_mean >  -0.77
+|   |   |   |--- bbox_ratio_delta <= 0.49
+|   |   |   |   |--- hip_vy_max <= 7.87
+|   |   |   |   |   |--- hip_vy_mean <= -0.43
+|   |   |   |   |   |   |--- class: lying
+|   |   |   |   |   |--- hip_vy_mean >  -0.43
+|   |   |   |   |   |   |--- class: lying
+|   |   |   |   |--- hip_vy_max >  7.87
+|   |   |   |   |   |--- torso_angle_std <= 29.07
+|   |   |   |   |   |   |--- class: lying
+|   |   |   |   |   |--- torso_angle_std >  29.07
+|   |   |   |   |   |   |--- class: lying
+|   |   |   |--- bbox_ratio_delta >  0.49
+|   |   |   |   |--- class: lying
+|   |--- bbox_ratio_std >  0.34
+|   |   |--- hip_vy_mean <= 1.01
+|   |   |   |--- class: fall
+|   |   |--- hip_vy_mean >  1.01
+|   |   |   |--- class: lying
+|--- bbox_ratio_mean >  1.08
+|   |--- torso_angle_delta <= 8.26
+|   |   |--- valid_frac <= 0.05
+|   |   |   |--- class: lying
+|   |   |--- valid_frac >  0.05
+|   |   |   |--- hip_ay_mean <= 0.69
+|   |   |   |   |--- bbox_ratio_min <= 1.05
+|   |   |   |   |   |--- torso_angle_min <= 0.43
+|   |   |   |   |   |   |--- class: not fall
+|   |   |   |   |   |--- torso_angle_min >  0.43
+|   |   |   |   |   |   |--- class: lying
+|   |   |   |   |--- bbox_ratio_min >  1.05
+|   |   |   |   |   |--- head_height_delta <= -0.01
+|   |   |   |   |   |   |--- class: not fall
+|   |   |   |   |   |--- head_height_delta >  -0.01
+|   |   |   |   |   |   |--- class: not fall
+|   |   |   |--- hip_ay_mean >  0.69
+|   |   |   |   |--- hip_ay_std <= 6.29
+|   |   |   |   |   |--- bbox_ratio_std <= 0.31
+|   |   |   |   |   |   |--- class: fall
+|   |   |   |   |   |--- bbox_ratio_std >  0.31
+|   |   |   |   |   |   |--- class: not fall
+|   |   |   |   |--- hip_ay_std >  6.29
+|   |   |   |   |   |--- bbox_ratio_min <= 1.62
+|   |   |   |   |   |   |--- class: not fall
+|   |   |   |   |   |--- bbox_ratio_min >  1.62
+|   |   |   |   |   |   |--- class: not fall
+|   |--- torso_angle_delta >  8.26
+|   |   |--- valid_frac <= 0.88
+|   |   |   |--- bbox_ratio_max <= 2.60
+|   |   |   |   |--- hip_vy_min <= -1.10
+|   |   |   |   |   |--- hip_vy_mean <= -0.14
+|   |   |   |   |   |   |--- class: lying
+|   |   |   |   |   |--- hip_vy_mean >  -0.14
+|   |   |   |   |   |   |--- class: lying
+|   |   |   |   |--- hip_vy_min >  -1.10
+|   |   |   |   |   |--- class: not fall
+|   |   |   |--- bbox_ratio_max >  2.60
+|   |   |   |   |--- class: fall
+|   |   |--- valid_frac >  0.88
+|   |   |   |--- head_height_max <= 1.73
+|   |   |   |   |--- head_height_mean <= 0.24
+|   |   |   |   |   |--- hip_vy_max <= 3.96
+|   |   |   |   |   |   |--- class: not fall
+|   |   |   |   |   |--- hip_vy_max >  3.96
+|   |   |   |   |   |   |--- class: not fall
+|   |   |   |   |--- head_height_mean >  0.24
+|   |   |   |   |   |--- hip_vy_min <= -1.68
+|   |   |   |   |   |   |--- class: fall
+|   |   |   |   |   |--- hip_vy_min >  -1.68
+|   |   |   |   |   |   |--- class: fall
+|   |   |   |--- head_height_max >  1.73
+|   |   |   |   |--- bbox_ratio_delta <= -0.19
+|   |   |   |   |   |--- bbox_ratio_mean <= 1.50
+|   |   |   |   |   |   |--- class: lying
+|   |   |   |   |   |--- bbox_ratio_mean >  1.50
+|   |   |   |   |   |   |--- class: not fall
+|   |   |   |   |--- bbox_ratio_delta >  -0.19
+|   |   |   |   |   |--- class: fall
