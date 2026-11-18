@@ -19,31 +19,41 @@ MIT Sloan 15.071 *The AI Edge*, Project 1, November 2026.
 
 ## Results
 
-**Retained model: gradient boosting with the two-step alert.** It was chosen on the training
-data (URFD, by cross-validation), then tested on two other datasets filmed in other homes, which
-it never saw.
+**How to read the numbers.**
+- *Falls detected*: out of the real falls in the videos, how many triggered an alert.
+- *False alerts*: alerts raised while nobody fell, counted in the daily-life videos (walking,
+  sitting, bending, lying on a bed).
+- *Delay*: time between the start of the fall and the alert. The confirmation step adds about
+  1 second, because the system waits to see the person on the floor; this is negligible next to
+  a time on the floor counted in hours.
 
-| Dataset | Real falls | Falls detected | False alerts in daily-life videos |
+**1. The 6 models compared** (URFD, 30 falls and 40 daily-life videos; each video is predicted by
+a model that never saw it, 5-fold cross-validation):
+
+| Model | Alert only: falls detected | Alert only: false alerts | With confirmation: falls detected | With confirmation: false alerts |
+|---|---|---|---|---|
+| Naive (always "no fall") | 0 / 30 | 0 | 0 / 30 | 0 |
+| Fixed threshold rules | 28 / 30 | 30 | 20 / 30 | 17 |
+| Logistic regression | 29 / 30 | 37 | 25 / 30 | 17 |
+| Decision tree | 29 / 30 | 35 | 23 / 30 | 16 |
+| **Gradient boosting** | **29 / 30** | **15** | **27 / 30** | **7** |
+| Neural network | 25 / 30 | 24 | 24 / 30 | 11 |
+
+Mean delay: 0.4-0.6 s with the alert only, 1.3-1.5 s with confirmation.
+Confirmation roughly halves the false alerts of every model, at the cost of 1 to 8 missed falls
+(only 2 for the boosting).
+**Retained: gradient boosting with confirmation**, best on both counts.
+
+**2. The retained model in other homes** (datasets it never saw, gradient boosting with
+confirmation):
+
+| Dataset | Falls detected | False alerts | Mean delay |
 |---|---|---|---|
-| URFD (training set, cross-validation) | 30 | **27** | **7** (in 40 videos) |
-| GMDCSA-24 (3 other homes) | 78 | **52** | **9** (in 81 videos) |
-| Le2i (2 other homes, camera placed high) | 37 | **22** | **2** (in 23 videos) |
+| URFD (training homes, cross-validation, for reference) | 27 / 30 | 7 (40 videos) | 1.4 s |
+| GMDCSA-24 (3 other homes) | 52 / 78 | 9 (81 videos) | 1.4 s |
+| Le2i (2 other homes, camera placed high) | 22 / 37 | 2 (23 videos) | 0.9 s |
 
-A false alert = an alert raised while nobody fell. Without the confirmation step, the same model
-detects slightly more falls on URFD and GMDCSA-24 (29 and 53) but raises 2 to 4 times more false
-alerts (15, 33 and 7). The confirmation delays the alert by about 1 second (the alert comes 1 to 1.4 s after
-the fall starts).
-
-**Comparison of the 6 models** (URFD, alert without confirmation):
-
-| Model | Falls detected (of 30) | False alerts (40 daily-life videos) |
-|---|---|---|
-| Naive (always "no fall") | 0 | 0 |
-| Fixed threshold rules | 28 | 30 |
-| Logistic regression | 29 | 37 |
-| Decision tree | 29 | 35 |
-| **Gradient boosting** | **29** | **15** |
-| Neural network | 25 | 24 |
+Performance drops when the room, the camera and the people change: this is the main limit.
 
 **Impact** (`config/impact.yaml` → `results/impact.md`; every number has a source or is marked
 as a hypothesis). For 1,000 people monitored for a year, about 58 long stays on the floor (≥ 1 h)
